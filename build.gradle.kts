@@ -3,6 +3,7 @@ plugins {
 	id("org.springframework.boot") version "4.0.7"
 	id("io.spring.dependency-management") version "1.1.7"
     id("org.openapi.generator") version "7.8.0"
+    id("org.liquibase.gradle") version "2.2.2"
 }
 
 group = "com.euphoriav"
@@ -24,7 +25,10 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
-	annotationProcessor("org.projectlombok:lombok")
+    liquibaseRuntime("org.liquibase:liquibase-core:4.29.0")
+    liquibaseRuntime("org.postgresql:postgresql:42.7.3")
+    liquibaseRuntime("info.picocli:picocli:4.7.6")
+    annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-jdbc-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testCompileOnly("org.projectlombok:lombok")
@@ -35,7 +39,6 @@ dependencies {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
-
 
 openApiGenerate {
     generatorName.set("spring")
@@ -63,4 +66,16 @@ sourceSets {
 
 tasks.compileJava {
     dependsOn(tasks.openApiGenerate)
+}
+
+liquibase {
+    activities.register("main") {
+        arguments = mapOf(
+            "changelogFile" to "src/main/resources/db/changelog/changelog-master.yaml",
+            "url" to "jdbc:postgresql://localhost:5432/registry",
+            "username" to System.getenv("POSTGRES_USER"),
+            "password" to System.getenv("POSTGRES_PASSWORD"),
+        )
+    }
+    runList = "main"
 }

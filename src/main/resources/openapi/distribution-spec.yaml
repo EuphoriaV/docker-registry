@@ -259,12 +259,6 @@ paths:
               value: sha256:abc123def456...
           schema:
             type: string
-        - name: Authorization
-          in: header
-          required: true
-          description: RFC7235-compliant authorization header (e.g., `Bearer <token>`).
-          schema:
-            type: string
         - name: Accept
           in: header
           required: false
@@ -416,19 +410,6 @@ paths:
               value: sha256:abc123def456...
           schema:
             type: string
-        - name: Authorization
-          in: header
-          required: true
-          description: RFC7235-compliant authorization header (e.g., `Bearer <token>`).
-          schema:
-            type: string
-        - name: Content-Type
-          in: header
-          required: true
-          description: Media type of the manifest being uploaded.
-          schema:
-            type: string
-            example: application/vnd.docker.distribution.manifest.v2+json
 
       requestBody:
         required: true
@@ -570,12 +551,6 @@ paths:
               value: sha256:abc123def456...
           schema:
             type: string
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Bearer token for authentication
         - name: Accept
           in: header
           required: false
@@ -648,12 +623,6 @@ paths:
           required: true
           description: Digest of the manifest to delete (e.g., `sha256:...`)
           example: sha256:abc123def456...
-          schema:
-            type: string
-        - name: Authorization
-          in: header
-          required: true
-          description: Bearer token with `delete` access
           schema:
             type: string
       x-codeSamples:
@@ -734,12 +703,6 @@ paths:
           schema:
             type: string
           example: library/busybox
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Bearer token for authentication with `push` scope
 
       responses:
         "201":
@@ -828,13 +791,6 @@ paths:
           schema:
             type: string
           example: sha256:abc123def4567890...
-        - name: Authorization
-          in: header
-          required: true
-          description: Bearer token with pull or push scope
-          schema:
-            type: string
-          example: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6...
 
       responses:
         "200":
@@ -863,9 +819,6 @@ paths:
                   value:
                     method: HEAD
                     url: /v2/library/ubuntu/blobs/sha256:abc123def4567890...
-                    headers:
-                      Authorization: Bearer <token>
-                      Accept: '*/*'
                 blob-check-response:
                   summary: Sample 200 response headers
                   value:
@@ -920,13 +873,6 @@ paths:
           schema:
             type: string
           example: sha256:abc123def456...
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Bearer token with pull scope
-          example: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6...
 
       responses:
         "200":
@@ -1011,12 +957,6 @@ paths:
           schema:
             type: string
           example: abc123
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
-          example: Bearer eyJhbGciOi...
 
       responses:
         "204":
@@ -1094,12 +1034,6 @@ paths:
           schema:
             type: string
           example: sha256:abcd1234...
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
-          example: Bearer eyJhbGciOi...
 
       requestBody:
         required: false
@@ -1186,12 +1120,6 @@ paths:
           schema:
             type: string
           example: abc123
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
-          example: Bearer eyJhbGciOi...
         - name: Content-Range
           in: header
           required: false
@@ -1283,12 +1211,6 @@ paths:
           schema:
             type: string
           example: abc123
-        - name: Authorization
-          in: header
-          required: true
-          schema:
-            type: string
-          example: Bearer eyJhbGciOi...
 
       responses:
         "204":

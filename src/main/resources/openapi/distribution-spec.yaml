@@ -2,32 +2,19 @@ openapi: 3.0.3
 info:
   version: "2.0"
   title: EuphoriaV docker registry API
-  description: |
-    OCI-compliant registry, which means it adheres to the open
-    standards defined by the Open Container Initiative (OCI) for distributing
-    container images. This ensures compatibility with a wide range of tools and
-    platforms in the container ecosystem.
-
-    It does not cover the full OCI Distribution Specification.
-
-    For the complete OCI specification, see [OCI Distribution Specification](https://github.com/opencontainers/distribution-spec).
+  description: Docker registry API based on OCI Distribution Specification
 servers:
-  - description: EuphoriaV docker registry API
-    x-audience: public
-    url: http://localhost:8080
+  - description: Local server
+    url: http://localhost:5000
 
 tags:
 
   - name: Manifests
-    x-displayName: Manifests
     description: |
       Image manifests are JSON documents that describe an image: its configuration blob, the digests of each layer blob, and metadata such as media‑types and annotations.
 
   - name: Blobs
-    x-displayName: Blobs
-    description: |
-      Blobs are the binary objects referenced from manifests:
-      the config JSON and one or more compressed layer tarballs.
+    description: Blobs are the binary objects referenced from manifests
 
   - name: pull
     x-displayName: Pulling Images
@@ -216,6 +203,500 @@ tags:
 
 
 paths:
+  /v2:
+    get:
+      summary: Check API version
+      operationId: checkApiVersion
+      description: Check that registry supports Distribution API V2
+      responses:
+        "200":
+          description: Registry supports Distribution API V2.
+
+  /v2/{name}/blobs/uploads/:
+    post:
+      tags:
+        - Blobs
+      summary: Initiate blob upload
+      operationId: InitiateBlobUpload
+      description: Initiate an upload session for a blob (layer or config) in a repository.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the target repository
+          schema:
+            type: string
+
+      responses:
+        "202":
+          description: Upload initiated successfully.
+          headers:
+            Location:
+              description: Upload location URL for `PATCH` or `PUT` requests
+              schema:
+                type: string
+            Docker-Upload-UUID:
+              description: Upload session UUID
+              schema:
+                type: string
+            Range:
+              description: Byte range uploaded so far (inclusive)
+              schema:
+                type: string
+        "401":
+          description: Authentication required.
+        "403":
+          description: Access denied.
+        "429":
+          description: Too many requests.
+  /v2/{name}/blobs/{digest}:
+    head:
+      tags:
+        - Blobs
+      summary: Check existence of blob
+      operationId: CheckBlobExists
+      description: |
+        Check whether a blob (layer or config) exists in the registry.
+
+        This is useful before uploading a blob to avoid duplicates.
+
+        If the blob is present, the registry returns a `200 OK` response with headers like `Content-Length` and `Docker-Content-Digest`.
+
+        If the blob does not exist, the response will be `404 Not Found`.
+      x-codeSamples:
+        - lang: Bash
+          label: cURL
+          source: |
+            # HEAD to check if a blob exists
+            curl -I \
+              -H "Authorization: Bearer $TOKEN" \
+              https://registry-1.docker.io/v2/library/ubuntu/blobs/sha256:abc123...
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the Repository
+          example: library/ubuntu
+          schema:
+            type: string
+        - name: digest
+          in: path
+          required: true
+          description: Digest of the blob
+          schema:
+            type: string
+          example: sha256:abc123def4567890...
+
+      responses:
+        "200":
+          description: Blob exists
+          headers:
+            Content-Length:
+              description: Size of the blob in bytes
+              schema:
+                type: integer
+              example: 32654
+            Docker-Content-Digest:
+              description: Digest of the blob
+              schema:
+                type: string
+              example: sha256:abc123def4567890...
+            Content-Type:
+              description: MIME type of the blob content
+              schema:
+                type: string
+              example: application/octet-stream
+          content:
+            application/json:
+              examples:
+                blob-check-request:
+                  summary: Sample request
+                  value:
+                    method: HEAD
+                    url: /v2/library/ubuntu/blobs/sha256:abc123def4567890...
+                blob-check-response:
+                  summary: Sample 200 response headers
+                  value:
+                    status: 200 OK
+                    headers:
+                      Docker-Content-Digest: sha256:abc123def4567890...
+                      Content-Length: 32654
+                      Content-Type: application/octet-stream
+
+        "404":
+          description: Blob not found
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "429":
+          description: Too many requests
+    get:
+      tags:
+        - Blobs
+      summary: Retrieve blob
+      operationId: GetBlob
+      description: |
+        Download the blob identified by digest from the registry.
+
+        Blobs include image layers and configuration objects. Clients must use the digest from the manifest to retrieve a blob.
+
+        This endpoint may return a `307 Temporary Redirect` to a CDN or storage location. Clients must follow the redirect to obtain the actual blob content.
+
+        The blob content is typically a gzipped tarball (for layers) or JSON (for configs). The MIME type is usually `application/octet-stream`.
+      x-codeSamples:
+        - lang: Bash
+          label: cURL
+          source: |
+            # GET (download) a blob
+            curl -L \
+              -H "Authorization: Bearer $TOKEN" \
+              https://registry-1.docker.io/v2/library/ubuntu/blobs/sha256:abc123... \
+              -o layer.tar.gz
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Repository Name
+          example: library/ubuntu
+          schema:
+            type: string
+        - name: digest
+          in: path
+          required: true
+          description: Digest of the Blob
+          schema:
+            type: string
+          example: sha256:abc123def456...
+
+      responses:
+        "200":
+          description: Blob content returned directly
+          headers:
+            Content-Length:
+              description: Size of the blob in bytes
+              schema:
+                type: integer
+              example: 32768
+            Content-Type:
+              description: MIME type of the blob
+              schema:
+                type: string
+              example: application/octet-stream
+            Docker-Content-Digest:
+              description: Digest of the returned blob
+              schema:
+                type: string
+              example: sha256:abc123def456...
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+              examples:
+                small-layer:
+                  summary: Example binary blob (gzipped tar layer)
+                  value: "<binary data not shown>"
+
+        "307":
+          description: Temporary redirect to blob location
+          headers:
+            Location:
+              description: Redirect URL for blob download (e.g., S3 or CDN)
+              schema:
+                type: string
+              example: https://cdn.docker.io/blobs/library/ubuntu/abc123...
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Blob not found
+        "429":
+          description: Too many requests
+  /v2/{name}/blobs/uploads/{uuid}:
+    get:
+      tags:
+        - Blobs
+      summary: Get blob upload status
+      operationId: GetBlobUploadStatus
+      description: |
+        Retrieve the current status of an in-progress blob upload.
+
+        This is useful for:
+        - Resuming an interrupted upload
+        - Determining how many bytes have been accepted so far
+        - Retrying from the correct offset in chunked uploads
+
+        The response includes the `Range` header indicating the byte range received so far, and a `Docker-Upload-UUID` for identifying the session.
+      x-codeSamples:
+        - lang: Bash
+          label: cURL
+          source: |
+            # GET upload status
+            curl -I \
+              -H "Authorization: Bearer $TOKEN" \
+              https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Repository Name
+          example : library/ubuntu
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          required: true
+          description: Upload session UUID
+          schema:
+            type: string
+          example: abc123
+
+      responses:
+        "204":
+          description: Upload in progress. No body is returned.
+          headers:
+            Range:
+              description: Current byte range uploaded (inclusive)
+              schema:
+                type: string
+              example: 0-16383
+            Docker-Upload-UUID:
+              description: UUID of the upload session
+              schema:
+                type: string
+              example: abc123
+            Location:
+              description: URL to continue or complete the upload
+              schema:
+                type: string
+              example: /v2/library/ubuntu/blobs/uploads/abc123
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Upload session not found
+        "429":
+          description: Too many requests
+
+    put:
+      tags:
+        - Blobs
+      summary: Complete blob upload
+      operationId: CompleteBlobUpload
+      description: |
+        Complete the upload of a blob by finalizing an upload session.
+
+        This request must include the `digest` query parameter and optionally the last chunk of data. When the registry receives this request, it verifies the digest and stores the blob.
+
+        This endpoint supports:
+        - Monolithic uploads (upload entire blob in this request)
+        - Finalizing chunked uploads (last chunk plus `digest`)
+
+      x-codeSamples:
+        - lang: Bash
+          label: cURL
+          source: |
+            # PUT – complete upload (monolithic or final chunk)
+            curl -X PUT \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @layer.tar.gz \
+              "https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123?digest=sha256:abcd1234..."
+
+
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Repository name
+          schema:
+            type: string
+          example: library/ubuntu
+        - name: uuid
+          in: path
+          required: true
+          description: Upload session UUID returned from the POST request
+          schema:
+            type: string
+          example: abc123
+        - name: digest
+          in: query
+          required: true
+          description: Digest of the uploaded blob
+          schema:
+            type: string
+          example: sha256:abcd1234...
+
+      requestBody:
+        required: false
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+            examples:
+              layer-upload:
+                summary: Layer tarball blob
+                value: "<binary data not shown>"
+
+      responses:
+        "201":
+          description: Upload completed successfully
+          headers:
+            Docker-Content-Digest:
+              description: Canonical digest of the stored blob
+              schema:
+                type: string
+              example: sha256:abcd1234...
+            Location:
+              description: URL where the blob is now accessible
+              schema:
+                type: string
+              example: /v2/library/ubuntu/blobs/sha256:abcd1234...
+            Content-Length:
+              description: Always zero for completed uploads
+              schema:
+                type: integer
+              example: 0
+        "400":
+          description: Invalid digest or missing parameters
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Upload session not found
+        "416":
+          description: Requested range not satisfiable (if used in chunked mode)
+        "429":
+          description: Too many requests
+
+    patch:
+      tags:
+        - Blobs
+      summary: Upload blob chunk
+      operationId: UploadBlobChunk
+      description: Upload a chunk of a blob to an active upload session.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Repository name
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          required: true
+          description: Upload session UUID
+          schema:
+            type: string
+            format: uuid
+        - name: Content-Range
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional. Byte range of the chunk being sent
+
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+
+      responses:
+        "202":
+          description: Chunk accepted and stored
+          headers:
+            Location:
+              description: URL to continue or finalize the upload
+              schema:
+                type: string
+            Range:
+              description: Byte range uploaded so far (inclusive)
+              schema:
+                type: string
+            Docker-Upload-UUID:
+              description: Upload session UUID
+              schema:
+                type: string
+        "400":
+          description: Malformed content or range
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Upload session not found
+        "416":
+          description: Range error (e.g., chunk out of order)
+        "429":
+          description: Too many requests
+    delete:
+      tags:
+        - Blobs
+      summary: Cancel blob upload
+      operationId: CancelBlobUpload
+      description: |
+        Cancel an in-progress blob upload session.
+
+        This operation discards any data that has been uploaded and invalidates the upload session.
+
+        Use this when:
+        - An upload fails or is aborted mid-process
+        - The client wants to clean up unused upload sessions
+
+        After cancellation, the UUID is no longer valid and a new `POST` must be issued to restart the upload.
+
+      x-codeSamples:
+        - lang: Bash
+          label: cURL
+          source: |
+            # DELETE – cancel an upload session
+            curl -X DELETE \
+              -H "Authorization: Bearer $TOKEN" \
+              https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123`
+
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the repository
+          schema:
+            type: string
+          example: library/ubuntu
+        - name: uuid
+          in: path
+          required: true
+          description: Upload session UUID
+          schema:
+            type: string
+          example: abc123
+
+      responses:
+        "204":
+          description: Upload session cancelled successfully. No body is returned.
+          headers:
+            Content-Length:
+              description: Always zero
+              schema:
+                type: integer
+              example: 0
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Upload session not found
+        "429":
+          description: Too many requests
+
+
   /v2/{name}/manifests/{reference}:
     get:
       tags:
@@ -646,600 +1127,3 @@ paths:
           description: Only digest-based deletion is allowed.
         "429":
           description: Too many requests.
-  /v2/{name}/blobs/uploads/:
-    post:
-      tags:
-        - Blobs
-      summary: Initiate blob upload or attempt cross-repository blob mount
-      operationId: InitiateBlobUpload
-      description: |
-        Initiate an upload session for a blob (layer or config) in a repository.
-
-        This is the first step in uploading a blob. It returns a `Location` URL where the blob can be uploaded using `PATCH` (chunked) or `PUT` (monolithic).
-
-        Instead of uploading a blob, a client may attempt to mount a blob from another repository (if it has read access) by including the `mount` and `from` query parameters.
-
-        If successful, the registry responds with `201 Created` and the blob is reused without re-upload.
-
-        If the mount fails, the upload proceeds as usual and returns a `202 Accepted`.
-
-        You must authenticate with `push` access to the target repository.
-      x-codeSamples:
-        - lang: Bash
-          label: cURL (Initiate Standard Upload)
-          source: |
-            # Initiate a standard blob upload session
-            curl -i -X POST \
-              -H "Authorization: Bearer $TOKEN" \
-              https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/
-
-        - lang: Bash
-          label: cURL (Cross-Repository Blob Mount)
-          source: |
-            # Attempt a cross-repository blob mount
-            curl -i -X POST \
-              -H "Authorization: Bearer $TOKEN" \
-              "https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/?mount=sha256:abc123def456...&from=library/busybox"
-
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Name of the target repository
-          example: library/ubuntu
-          schema:
-            type: string
-        - name: mount
-          in: query
-          required: false
-          description: Digest of the blob to mount from another repository
-          schema:
-            type: string
-          example: sha256:abc123def456...
-        - name: from
-          in: query
-          required: false
-          description: Source repository to mount the blob from
-          schema:
-            type: string
-          example: library/busybox
-
-      responses:
-        "201":
-          description: Blob successfully mounted from another repository.
-          headers:
-            Location:
-              description: URL where the mounted blob is accessible
-              schema:
-                type: string
-              example: /v2/library/ubuntu/blobs/sha256:abc123...
-            Docker-Content-Digest:
-              description: Canonical digest of the mounted blob
-              schema:
-                type: string
-              example: sha256:abc123...
-            Content-Length:
-              description: Always zero
-              schema:
-                type: integer
-              example: 0
-        "202":
-          description: Upload initiated successfully (fallback if mount fails).
-          headers:
-            Location:
-              description: Upload location URL for `PATCH` or `PUT` requests
-              schema:
-                type: string
-              example: /v2/library/ubuntu/blobs/uploads/abc123
-            Docker-Upload-UUID:
-              description: Server-generated UUID for the upload session
-              schema:
-                type: string
-              example: abc123
-            Range:
-              description: Current upload byte range (typically `0-0` at init)
-              schema:
-                type: string
-              example: 0-0
-            Content-Length:
-              description: Always zero
-              schema:
-                type: integer
-              example: 0
-        "401":
-          description: Authentication required.
-        "403":
-          description: Access denied.
-        "404":
-          description: Repository not found.
-        "429":
-          description: Too many requests.
-  /v2/{name}/blobs/{digest}:
-    head:
-      tags:
-        - Blobs
-      summary: Check existence of blob
-      operationId: CheckBlobExists
-      description: |
-        Check whether a blob (layer or config) exists in the registry.
-
-        This is useful before uploading a blob to avoid duplicates.
-
-        If the blob is present, the registry returns a `200 OK` response with headers like `Content-Length` and `Docker-Content-Digest`.
-
-        If the blob does not exist, the response will be `404 Not Found`.
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # HEAD to check if a blob exists
-            curl -I \
-              -H "Authorization: Bearer $TOKEN" \
-              https://registry-1.docker.io/v2/library/ubuntu/blobs/sha256:abc123...
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Name of the Repository
-          example: library/ubuntu
-          schema:
-            type: string
-        - name: digest
-          in: path
-          required: true
-          description: Digest of the blob
-          schema:
-            type: string
-          example: sha256:abc123def4567890...
-
-      responses:
-        "200":
-          description: Blob exists
-          headers:
-            Content-Length:
-              description: Size of the blob in bytes
-              schema:
-                type: integer
-              example: 32654
-            Docker-Content-Digest:
-              description: Digest of the blob
-              schema:
-                type: string
-              example: sha256:abc123def4567890...
-            Content-Type:
-              description: MIME type of the blob content
-              schema:
-                type: string
-              example: application/octet-stream
-          content:
-            application/json:
-              examples:
-                blob-check-request:
-                  summary: Sample request
-                  value:
-                    method: HEAD
-                    url: /v2/library/ubuntu/blobs/sha256:abc123def4567890...
-                blob-check-response:
-                  summary: Sample 200 response headers
-                  value:
-                    status: 200 OK
-                    headers:
-                      Docker-Content-Digest: sha256:abc123def4567890...
-                      Content-Length: 32654
-                      Content-Type: application/octet-stream
-
-        "404":
-          description: Blob not found
-        "401":
-          description: Authentication required
-        "403":
-          description: Access denied
-        "429":
-          description: Too many requests
-    get:
-      tags:
-        - Blobs
-      summary: Retrieve blob
-      operationId: GetBlob
-      description: |
-        Download the blob identified by digest from the registry.
-
-        Blobs include image layers and configuration objects. Clients must use the digest from the manifest to retrieve a blob.
-
-        This endpoint may return a `307 Temporary Redirect` to a CDN or storage location. Clients must follow the redirect to obtain the actual blob content.
-
-        The blob content is typically a gzipped tarball (for layers) or JSON (for configs). The MIME type is usually `application/octet-stream`.
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # GET (download) a blob
-            curl -L \
-              -H "Authorization: Bearer $TOKEN" \
-              https://registry-1.docker.io/v2/library/ubuntu/blobs/sha256:abc123... \
-              -o layer.tar.gz
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Repository Name
-          example: library/ubuntu
-          schema:
-            type: string
-        - name: digest
-          in: path
-          required: true
-          description: Digest of the Blob
-          schema:
-            type: string
-          example: sha256:abc123def456...
-
-      responses:
-        "200":
-          description: Blob content returned directly
-          headers:
-            Content-Length:
-              description: Size of the blob in bytes
-              schema:
-                type: integer
-              example: 32768
-            Content-Type:
-              description: MIME type of the blob
-              schema:
-                type: string
-              example: application/octet-stream
-            Docker-Content-Digest:
-              description: Digest of the returned blob
-              schema:
-                type: string
-              example: sha256:abc123def456...
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-              examples:
-                small-layer:
-                  summary: Example binary blob (gzipped tar layer)
-                  value: "<binary data not shown>"
-
-        "307":
-          description: Temporary redirect to blob location
-          headers:
-            Location:
-              description: Redirect URL for blob download (e.g., S3 or CDN)
-              schema:
-                type: string
-              example: https://cdn.docker.io/blobs/library/ubuntu/abc123...
-        "401":
-          description: Authentication required
-        "403":
-          description: Access denied
-        "404":
-          description: Blob not found
-        "429":
-          description: Too many requests
-  /v2/{name}/blobs/uploads/{uuid}:
-    get:
-      tags:
-        - Blobs
-      summary: Get blob upload status
-      operationId: GetBlobUploadStatus
-      description: |
-        Retrieve the current status of an in-progress blob upload.
-
-        This is useful for:
-        - Resuming an interrupted upload
-        - Determining how many bytes have been accepted so far
-        - Retrying from the correct offset in chunked uploads
-
-        The response includes the `Range` header indicating the byte range received so far, and a `Docker-Upload-UUID` for identifying the session.
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # GET upload status
-            curl -I \
-              -H "Authorization: Bearer $TOKEN" \
-              https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Repository Name
-          example : library/ubuntu
-          schema:
-            type: string
-        - name: uuid
-          in: path
-          required: true
-          description: Upload session UUID
-          schema:
-            type: string
-          example: abc123
-
-      responses:
-        "204":
-          description: Upload in progress. No body is returned.
-          headers:
-            Range:
-              description: Current byte range uploaded (inclusive)
-              schema:
-                type: string
-              example: 0-16383
-            Docker-Upload-UUID:
-              description: UUID of the upload session
-              schema:
-                type: string
-              example: abc123
-            Location:
-              description: URL to continue or complete the upload
-              schema:
-                type: string
-              example: /v2/library/ubuntu/blobs/uploads/abc123
-        "401":
-          description: Authentication required
-        "403":
-          description: Access denied
-        "404":
-          description: Upload session not found
-        "429":
-          description: Too many requests
-
-    put:
-      tags:
-        - Blobs
-      summary: Complete blob upload
-      operationId: CompleteBlobUpload
-      description: |
-        Complete the upload of a blob by finalizing an upload session.
-
-        This request must include the `digest` query parameter and optionally the last chunk of data. When the registry receives this request, it verifies the digest and stores the blob.
-
-        This endpoint supports:
-        - Monolithic uploads (upload entire blob in this request)
-        - Finalizing chunked uploads (last chunk plus `digest`)
-
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # PUT – complete upload (monolithic or final chunk)
-            curl -X PUT \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @layer.tar.gz \
-              "https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123?digest=sha256:abcd1234..."
-
-
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Repository name
-          schema:
-            type: string
-          example: library/ubuntu
-        - name: uuid
-          in: path
-          required: true
-          description: Upload session UUID returned from the POST request
-          schema:
-            type: string
-          example: abc123
-        - name: digest
-          in: query
-          required: true
-          description: Digest of the uploaded blob
-          schema:
-            type: string
-          example: sha256:abcd1234...
-
-      requestBody:
-        required: false
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
-            examples:
-              layer-upload:
-                summary: Layer tarball blob
-                value: "<binary data not shown>"
-
-      responses:
-        "201":
-          description: Upload completed successfully
-          headers:
-            Docker-Content-Digest:
-              description: Canonical digest of the stored blob
-              schema:
-                type: string
-              example: sha256:abcd1234...
-            Location:
-              description: URL where the blob is now accessible
-              schema:
-                type: string
-              example: /v2/library/ubuntu/blobs/sha256:abcd1234...
-            Content-Length:
-              description: Always zero for completed uploads
-              schema:
-                type: integer
-              example: 0
-        "400":
-          description: Invalid digest or missing parameters
-        "401":
-          description: Authentication required
-        "403":
-          description: Access denied
-        "404":
-          description: Upload session not found
-        "416":
-          description: Requested range not satisfiable (if used in chunked mode)
-        "429":
-          description: Too many requests
-
-    patch:
-      tags:
-        - Blobs
-      summary: Upload blob chunk
-      operationId: UploadBlobChunk
-      description: |
-        Upload a chunk of a blob to an active upload session.
-
-        Use this method for **chunked uploads**, especially for large blobs or when resuming interrupted uploads.
-
-        The client sends binary data using `PATCH`, optionally including a `Content-Range` header.
-
-        After each chunk is accepted, the registry returns a `202 Accepted` response with:
-        - `Range`: current byte range stored
-        - `Docker-Upload-UUID`: identifier for the upload session
-        - `Location`: URL to continue the upload or finalize with `PUT`
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # PATCH – upload a chunk (first 64 KiB)
-            curl -X PATCH \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @chunk-0.bin \
-              "https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123"
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Repository name
-          schema:
-            type: string
-          example: library/ubuntu
-        - name: uuid
-          in: path
-          required: true
-          description: Upload session UUID
-          schema:
-            type: string
-          example: abc123
-        - name: Content-Range
-          in: header
-          required: false
-          schema:
-            type: string
-          example: bytes 0-65535
-          description: Optional. Byte range of the chunk being sent
-
-      requestBody:
-        required: true
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
-            examples:
-              chunk-0:
-                summary: Upload chunk 0 of a blob
-                value: "<binary data not shown>"
-
-      responses:
-        "202":
-          description: Chunk accepted and stored
-          headers:
-            Location:
-              description: URL to continue or finalize the upload
-              schema:
-                type: string
-              example: /v2/library/ubuntu/blobs/uploads/abc123
-            Range:
-              description: Byte range uploaded so far (inclusive)
-              schema:
-                type: string
-              example: 0-65535
-            Docker-Upload-UUID:
-              description: Upload session UUID
-              schema:
-                type: string
-              example: abc123
-        "400":
-          description: Malformed content or range
-        "401":
-          description: Authentication required
-        "403":
-          description: Access denied
-        "404":
-          description: Upload session not found
-        "416":
-          description: Range error (e.g., chunk out of order)
-        "429":
-          description: Too many requests
-    delete:
-      tags:
-        - Blobs
-      summary: Cancel blob upload
-      operationId: CancelBlobUpload
-      description: |
-        Cancel an in-progress blob upload session.
-
-        This operation discards any data that has been uploaded and invalidates the upload session.
-
-        Use this when:
-        - An upload fails or is aborted mid-process
-        - The client wants to clean up unused upload sessions
-
-        After cancellation, the UUID is no longer valid and a new `POST` must be issued to restart the upload.
-
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # DELETE – cancel an upload session
-            curl -X DELETE \
-              -H "Authorization: Bearer $TOKEN" \
-              https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123`
-
-      parameters:
-        - name: name
-          in: path
-          required: true
-          description: Name of the repository
-          schema:
-            type: string
-          example: library/ubuntu
-        - name: uuid
-          in: path
-          required: true
-          description: Upload session UUID
-          schema:
-            type: string
-          example: abc123
-
-      responses:
-        "204":
-          description: Upload session cancelled successfully. No body is returned.
-          headers:
-            Content-Length:
-              description: Always zero
-              schema:
-                type: integer
-              example: 0
-        "401":
-          description: Authentication required
-        "403":
-          description: Access denied
-        "404":
-          description: Upload session not found
-        "429":
-          description: Too many requests
-
-
-x-tagGroups:
-  - name: General
-    tags:
-      - overview
-      - authentication
-      - pull
-      - push
-      - delete
-  - name: API
-    tags:
-      - Manifests
-      - Blobs

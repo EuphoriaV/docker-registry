@@ -1,7 +1,9 @@
 package com.euphoriav.docker.registry.exception;
 
-public class NotFoundException extends RuntimeException {
-    public NotFoundException(String message) {
-        super(message);
+import com.euphoriav.docker.registry.dto.ErrorResponse;
+
+public class NotFoundException extends ApiException {
+    public NotFoundException(String message, ErrorResponse.ErrorCode code) {
+        super(message, code);
     }
 }

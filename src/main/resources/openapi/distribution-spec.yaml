@@ -249,34 +249,19 @@ paths:
           description: Access denied.
         "429":
           description: Too many requests.
+
   /v2/{name}/blobs/{digest}:
     head:
       tags:
         - Blobs
       summary: Check existence of blob
       operationId: CheckBlobExists
-      description: |
-        Check whether a blob (layer or config) exists in the registry.
-
-        This is useful before uploading a blob to avoid duplicates.
-
-        If the blob is present, the registry returns a `200 OK` response with headers like `Content-Length` and `Docker-Content-Digest`.
-
-        If the blob does not exist, the response will be `404 Not Found`.
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # HEAD to check if a blob exists
-            curl -I \
-              -H "Authorization: Bearer $TOKEN" \
-              https://registry-1.docker.io/v2/library/ubuntu/blobs/sha256:abc123...
+      description: Check whether a blob (layer or config) exists in the registry.
       parameters:
         - name: name
           in: path
           required: true
           description: Name of the Repository
-          example: library/ubuntu
           schema:
             type: string
         - name: digest
@@ -285,7 +270,6 @@ paths:
           description: Digest of the blob
           schema:
             type: string
-          example: sha256:abc123def4567890...
 
       responses:
         "200":
@@ -295,34 +279,14 @@ paths:
               description: Size of the blob in bytes
               schema:
                 type: integer
-              example: 32654
             Docker-Content-Digest:
               description: Digest of the blob
               schema:
                 type: string
-              example: sha256:abc123def4567890...
             Content-Type:
               description: MIME type of the blob content
               schema:
                 type: string
-              example: application/octet-stream
-          content:
-            application/json:
-              examples:
-                blob-check-request:
-                  summary: Sample request
-                  value:
-                    method: HEAD
-                    url: /v2/library/ubuntu/blobs/sha256:abc123def4567890...
-                blob-check-response:
-                  summary: Sample 200 response headers
-                  value:
-                    status: 200 OK
-                    headers:
-                      Docker-Content-Digest: sha256:abc123def4567890...
-                      Content-Length: 32654
-                      Content-Type: application/octet-stream
-
         "404":
           description: Blob not found
         "401":
@@ -486,27 +450,7 @@ paths:
         - Blobs
       summary: Complete blob upload
       operationId: CompleteBlobUpload
-      description: |
-        Complete the upload of a blob by finalizing an upload session.
-
-        This request must include the `digest` query parameter and optionally the last chunk of data. When the registry receives this request, it verifies the digest and stores the blob.
-
-        This endpoint supports:
-        - Monolithic uploads (upload entire blob in this request)
-        - Finalizing chunked uploads (last chunk plus `digest`)
-
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # PUT – complete upload (monolithic or final chunk)
-            curl -X PUT \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @layer.tar.gz \
-              "https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123?digest=sha256:abcd1234..."
-
-
+      description: Complete the upload of a blob by finalizing an upload session.
       parameters:
         - name: name
           in: path
@@ -514,22 +458,25 @@ paths:
           description: Repository name
           schema:
             type: string
-          example: library/ubuntu
         - name: uuid
           in: path
           required: true
           description: Upload session UUID returned from the POST request
           schema:
             type: string
-          example: abc123
+            format: uuid
         - name: digest
           in: query
           required: true
           description: Digest of the uploaded blob
           schema:
             type: string
-          example: sha256:abcd1234...
-
+        - name: Content-Range
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional. Byte range of the chunk being sent
       requestBody:
         required: false
         content:
@@ -537,10 +484,6 @@ paths:
             schema:
               type: string
               format: binary
-            examples:
-              layer-upload:
-                summary: Layer tarball blob
-                value: "<binary data not shown>"
 
       responses:
         "201":
@@ -550,17 +493,14 @@ paths:
               description: Canonical digest of the stored blob
               schema:
                 type: string
-              example: sha256:abcd1234...
             Location:
               description: URL where the blob is now accessible
               schema:
                 type: string
-              example: /v2/library/ubuntu/blobs/sha256:abcd1234...
             Content-Length:
               description: Always zero for completed uploads
               schema:
                 type: integer
-              example: 0
         "400":
           description: Invalid digest or missing parameters
         "401":

@@ -1,0 +1,52 @@
+package com.euphoriav.docker.registry.logic.blob;
+
+import com.euphoriav.docker.registry.dao.BlobUploadDao;
+import com.euphoriav.docker.registry.exception.InternalServerException;
+import com.euphoriav.docker.registry.exception.InvalidRequestException;
+import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
+import com.euphoriav.docker.registry.model.BlobUpload;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
+
+import java.util.UUID;
+
+import static com.euphoriav.docker.registry.dto.ErrorResponse.ErrorCode.DIGEST_INVALID;
+
+@Component
+@RequiredArgsConstructor
+public class CompleteBlobUploadOperation {
+
+    private final BlobUploadDao blobUploadDao;
+    private final BlobUploader blobUploader;
+    private final UploadBlobChunkOperation uploadBlobChunkOperation;
+
+    public void activate(String name, UUID id, String digest, String range, Resource body, long contentLength) {
+        if (contentLength > 0) {
+            uploadBlobChunkOperation.activate(name, id, body, range, contentLength);
+        }
+
+        String actualDigest;
+        try {
+            actualDigest = blobUploader.computeDigest(id);
+        } catch (Exception e) {
+            blobUploadDao.updateStatus(id, BlobUpload.UploadStatus.FAILED);
+            throw new InternalServerException("could not calculate actual digest", e);
+        }
+
+        if (!digest.equals(actualDigest)) {
+            blobUploadDao.updateStatus(id, BlobUpload.UploadStatus.FAILED);
+            throw new InvalidRequestException("provided digest did not match uploaded content", DIGEST_INVALID);
+        }
+
+        long size;
+        try {
+            size = blobUploader.getSize(id);
+        } catch (Exception e) {
+            blobUploadDao.updateStatus(id, BlobUpload.UploadStatus.FAILED);
+            throw new InternalServerException("could not get blob size", e);
+        }
+
+        blobUploadDao.completeUpload(id, digest, size);
+    }
+}

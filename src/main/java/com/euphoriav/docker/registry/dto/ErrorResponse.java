@@ -7,6 +7,6 @@ public record ErrorResponse(List<ErrorDto> errors) {
     }
 
     public enum ErrorCode {
-        BLOB_UPLOAD_UNKNOWN, BLOB_UPLOAD_INVALID, SIZE_INVALID;
+        BLOB_UPLOAD_UNKNOWN, BLOB_UPLOAD_INVALID, SIZE_INVALID, DIGEST_INVALID;
     }
 }

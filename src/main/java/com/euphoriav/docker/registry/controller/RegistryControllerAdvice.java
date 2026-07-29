@@ -1,9 +1,9 @@
 package com.euphoriav.docker.registry.controller;
 
 import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.exception.InvalidRangeException;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
-import com.euphoriav.docker.registry.exception.InvalidRangeException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;

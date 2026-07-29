@@ -12,6 +12,6 @@ public class BlobUpload {
     private UploadStatus status;
 
     public enum UploadStatus {
-        IN_PROGRESS, COMPLETED;
+        IDLE, IN_PROGRESS, COMPLETED, FAILED;
     }
 }

@@ -1,6 +1,7 @@
 package com.euphoriav.docker.registry.controller;
 
 import com.euphoriav.docker.registry.api.BlobsApi;
+import com.euphoriav.docker.registry.logic.blob.CompleteBlobUploadOperation;
 import com.euphoriav.docker.registry.logic.blob.InitiateBlobUploadOperation;
 import com.euphoriav.docker.registry.logic.blob.UploadBlobChunkOperation;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BlobsController implements BlobsApi {
 
+    private final CompleteBlobUploadOperation completeBlobUploadOperation;
     private final InitiateBlobUploadOperation initiateBlobUploadOperation;
     private final UploadBlobChunkOperation uploadBlobChunkOperation;
     private final NativeWebRequest nativeWebRequest;
@@ -34,8 +36,12 @@ public class BlobsController implements BlobsApi {
     }
 
     @Override
-    public ResponseEntity<Void> completeBlobUpload(String name, String uuid, String digest, Resource body) {
-        return BlobsApi.super.completeBlobUpload(name, uuid, digest, body);
+    public ResponseEntity<Void> completeBlobUpload(String name, UUID uuid, String digest, String range, Resource body) {
+        log.info("completeBlobUpload request {} {} {} {}", name, uuid, digest, range);
+        completeBlobUploadOperation.activate(name, uuid, digest, range, body, ((HttpServletRequest) nativeWebRequest.getNativeRequest()).getContentLengthLong());
+        return ResponseEntity.created(URI.create("/v2/%s/blobs/%s".formatted(name, digest)))
+                .header("Docker-Content-Digest", digest)
+                .build();
     }
 
     @Override
@@ -60,12 +66,12 @@ public class BlobsController implements BlobsApi {
     }
 
     @Override
-    public ResponseEntity<Void> uploadBlobChunk(String name, UUID id, Resource body, String range) {
-        log.info("uploadBlobChunk request {} {} {}", name, id, range);
-        var lastByte = uploadBlobChunkOperation.activate(name, id, body, range, ((HttpServletRequest) nativeWebRequest.getNativeRequest()).getContentLengthLong());
+    public ResponseEntity<Void> uploadBlobChunk(String name, UUID uuid, Resource body, String range) {
+        log.info("uploadBlobChunk request {} {} {}", name, uuid, range);
+        var lastByte = uploadBlobChunkOperation.activate(name, uuid, body, range, ((HttpServletRequest) nativeWebRequest.getNativeRequest()).getContentLengthLong());
         return ResponseEntity.accepted()
-                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, id)))
-                .header("Docker-Upload-UUID", id.toString())
+                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, uuid)))
+                .header("Docker-Upload-UUID", uuid.toString())
                 .header("Range", "0-%d".formatted(lastByte))
                 .build();
     }

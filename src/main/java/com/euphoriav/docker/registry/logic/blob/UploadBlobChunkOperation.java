@@ -35,28 +35,32 @@ public class UploadBlobChunkOperation {
         }
 
         try {
-            long startRange, endRange;
-            try {
-                startRange = blobUploader.getSize(id);
-                endRange = startRange + contentLength - 1;
-            } catch (Exception e) {
-                throw new InternalServerException("could not get blob size", e);
-            }
-
-            var expectedRange = "%d-%d".formatted(startRange, endRange);
-            if (StringUtils.isNotEmpty(range) && !expectedRange.equals(range)) {
-                throw new InvalidRangeException("range is out of order");
-            }
-
-            try {
-                blobUploader.uploadChunk(id, body.getInputStream(), startRange);
-            } catch (Exception e) {
-                throw new InternalServerException("could not upload chunk", e);
-            }
-
-            return endRange;
+            return uploadChunk(id, body, range, contentLength);
         } finally {
             blobUploadDao.updateStatus(id, BlobUpload.UploadStatus.IDLE);
         }
+    }
+
+    public long uploadChunk(UUID id, Resource body, String range, long contentLength) {
+        long startRange, endRange;
+        try {
+            startRange = blobUploader.getSize(id);
+            endRange = startRange + contentLength - 1;
+        } catch (Exception e) {
+            throw new InternalServerException("could not get blob size", e);
+        }
+
+        var expectedRange = "%d-%d".formatted(startRange, endRange);
+        if (StringUtils.isNotEmpty(range) && !expectedRange.equals(range)) {
+            throw new InvalidRangeException("range is out of order");
+        }
+
+        try {
+            blobUploader.uploadChunk(id, body.getInputStream(), startRange);
+        } catch (Exception e) {
+            throw new InternalServerException("could not upload chunk", e);
+        }
+
+        return endRange;
     }
 }

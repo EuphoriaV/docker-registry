@@ -1,6 +1,7 @@
 package com.euphoriav.docker.registry.controller;
 
 import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.exception.InternalServerException;
 import com.euphoriav.docker.registry.exception.InvalidRangeException;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
@@ -33,6 +34,13 @@ public class RegistryControllerAdvice {
     public ErrorResponse handle(InvalidRangeException e) {
         log.warn(e.toString());
         return e.getErrorResponse();
+    }
+
+    @ExceptionHandler(InternalServerException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public String handle(InternalServerException e) {
+        log.error(e.getMessage(), e.getCause());
+        return e.getMessage();
     }
 
     @ExceptionHandler(Exception.class)

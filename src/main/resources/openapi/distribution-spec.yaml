@@ -516,26 +516,7 @@ paths:
         - Blobs
       summary: Cancel blob upload
       operationId: CancelBlobUpload
-      description: |
-        Cancel an in-progress blob upload session.
-
-        This operation discards any data that has been uploaded and invalidates the upload session.
-
-        Use this when:
-        - An upload fails or is aborted mid-process
-        - The client wants to clean up unused upload sessions
-
-        After cancellation, the UUID is no longer valid and a new `POST` must be issued to restart the upload.
-
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # DELETE – cancel an upload session
-            curl -X DELETE \
-              -H "Authorization: Bearer $TOKEN" \
-              https://registry-1.docker.io/v2/library/ubuntu/blobs/uploads/abc123`
-
+      description: Cancel an in-progress blob upload session.
       parameters:
         - name: name
           in: path
@@ -543,24 +524,17 @@ paths:
           description: Name of the repository
           schema:
             type: string
-          example: library/ubuntu
         - name: uuid
           in: path
           required: true
           description: Upload session UUID
           schema:
             type: string
-          example: abc123
+            format: uuid
 
       responses:
         "204":
           description: Upload session cancelled successfully. No body is returned.
-          headers:
-            Content-Length:
-              description: Always zero
-              schema:
-                type: integer
-              example: 0
         "401":
           description: Authentication required
         "403":

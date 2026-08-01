@@ -18,7 +18,14 @@ public class LockService {
 
     private static final long LOCK_TIMEOUT_SECONDS = 5;
 
-    private final LockRegistry<?> lockRegistry;
+    private final LockRegistry lockRegistry;
+
+    public void tryInLock(UUID id, Runnable runnable) {
+        tryInLock(id, () -> {
+            runnable.run();
+            return null;
+        });
+    }
 
     public <T> T tryInLock(UUID id, Supplier<T> supplier) {
         var lock = lockRegistry.obtain(id.toString());

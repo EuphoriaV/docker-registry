@@ -21,7 +21,7 @@ public class DistributedLockConfiguration {
     }
 
     @Bean
-    public LockRegistry<?> lockRegistry() {
+    public LockRegistry lockRegistry() {
         return new JdbcLockRegistry(lockRepository(null));
     }
 }

@@ -1,6 +1,6 @@
 plugins {
 	java
-	id("org.springframework.boot") version "4.0.7"
+	id("org.springframework.boot") version "3.5.16"
 	id("io.spring.dependency-management") version "1.1.7"
     id("org.openapi.generator") version "7.8.0"
     id("org.liquibase.gradle") version "2.2.2"
@@ -20,10 +20,11 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-	implementation("org.springframework.boot:spring-boot-starter-webmvc")
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+	implementation("org.springframework.boot:spring-boot-starter-jdbc")
+	implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
     implementation("org.springframework.integration:spring-integration-jdbc:6.2.11")
     compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
@@ -31,8 +32,6 @@ dependencies {
     liquibaseRuntime("org.postgresql:postgresql:42.7.3")
     liquibaseRuntime("info.picocli:picocli:4.7.6")
     annotationProcessor("org.projectlombok:lombok")
-	testImplementation("org.springframework.boot:spring-boot-starter-data-jdbc-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testCompileOnly("org.projectlombok:lombok")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testAnnotationProcessor("org.projectlombok:lombok")

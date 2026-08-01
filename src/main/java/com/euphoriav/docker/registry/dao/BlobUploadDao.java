@@ -3,10 +3,12 @@ package com.euphoriav.docker.registry.dao;
 import com.euphoriav.docker.registry.model.BlobUpload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -18,34 +20,34 @@ public class BlobUploadDao {
 
     public void insert(UUID id, String repository) {
         //language=PostgreSQL
-        var sql = "insert into registry.blob_upload(id, repository, status) values (:id, :repository, 'IDLE'::upload_status)";
+        var sql = "insert into registry.blob_upload(id, repository) values (:id, :repository)";
         var params = Map.of("id", id, "repository", repository);
         jdbcTemplate.update(sql, params);
         log.info("Inserted blob_upload with id = {} and repository = {}", id, repository);
     }
 
-    public boolean lockUpload(UUID id, String repository) {
+    public Optional<BlobUpload> find(UUID id, String repository) {
         //language=PostgreSQL
-        var sql = "update registry.blob_upload set status = 'IN_PROGRESS'::upload_status where id = :id and repository = :repository and status = 'IDLE'::upload_status";
+        var sql = "select * from registry.blob_upload where id = :id and repository = :repository";
         var params = Map.of("id", id, "repository", repository);
-        var res = jdbcTemplate.update(sql, params);
-        log.info("Updated blob_upload with id = {} and repository = {}", id, repository);
-        return res > 0;
+        var result = jdbcTemplate.query(sql, params, BeanPropertyRowMapper.newInstance(BlobUpload.class));
+        log.info("selected blob_upload with id = {} and repository = {}", id, repository);
+        return result.stream().findFirst();
     }
 
-    public void updateStatus(UUID id, BlobUpload.UploadStatus status) {
+    public void updateBytesReceived(UUID id, long bytesReceived) {
         //language=PostgreSQL
-        var sql = "update registry.blob_upload set status = :status::upload_status where id = :id";
-        var params = Map.of("id", id, "status", status.toString());
+        var sql = "update registry.blob_upload set bytes_received = bytes_received + :bytesReceived where id = :id";
+        var params = Map.of("id", id, "bytesReceived", bytesReceived);
         jdbcTemplate.update(sql, params);
-        log.info("Updated blob_upload with id = {}", id);
+        log.info("Updated blob_upload with id = {} and bytesReceived = {}", id, bytesReceived);
     }
 
-    public void completeUpload(UUID id, String digest, long size) {
+    public void delete(UUID id) {
         //language=PostgreSQL
-        var sql = "update registry.blob_upload set status = 'COMPLETED'::upload_status, size = :size, digest = :digest where id = :id";
-        var params = Map.of("id", id, "size", size, "digest", digest);
+        var sql = "delete from registry.blob_upload where id = :id";
+        var params = Map.of("id", id);
         jdbcTemplate.update(sql, params);
-        log.info("Updated blob_upload with id = {} and digest = {} and size = {}", id, digest, size);
+        log.info("Deleted blob_upload with id = {}", id);
     }
 }

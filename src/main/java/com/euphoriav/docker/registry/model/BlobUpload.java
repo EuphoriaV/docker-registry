@@ -9,9 +9,4 @@ public class BlobUpload {
     private UUID id;
     private String repository;
     private long bytesReceived;
-    private UploadStatus status;
-
-    public enum UploadStatus {
-        IDLE, IN_PROGRESS, COMPLETED, FAILED;
-    }
 }

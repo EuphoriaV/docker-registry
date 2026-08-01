@@ -24,6 +24,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.integration:spring-integration-jdbc:6.2.11")
     compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
     liquibaseRuntime("org.liquibase:liquibase-core:4.29.0")

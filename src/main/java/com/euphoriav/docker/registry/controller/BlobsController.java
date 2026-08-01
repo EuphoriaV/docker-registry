@@ -1,6 +1,7 @@
 package com.euphoriav.docker.registry.controller;
 
 import com.euphoriav.docker.registry.api.BlobsApi;
+import com.euphoriav.docker.registry.logic.blob.CheckBlobExistsOperation;
 import com.euphoriav.docker.registry.logic.blob.CompleteBlobUploadOperation;
 import com.euphoriav.docker.registry.logic.blob.InitiateBlobUploadOperation;
 import com.euphoriav.docker.registry.logic.blob.UploadBlobChunkOperation;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BlobsController implements BlobsApi {
 
+    private final CheckBlobExistsOperation checkBlobExistsOperation;
     private final CompleteBlobUploadOperation completeBlobUploadOperation;
     private final InitiateBlobUploadOperation initiateBlobUploadOperation;
     private final UploadBlobChunkOperation uploadBlobChunkOperation;
@@ -32,7 +34,13 @@ public class BlobsController implements BlobsApi {
 
     @Override
     public ResponseEntity<Void> checkBlobExists(String name, String digest) {
-        return BlobsApi.super.checkBlobExists(name, digest);
+        log.info("checkBlobExists request {} {}", name, digest);
+        var size = checkBlobExistsOperation.activate(name, digest);
+        return ResponseEntity.ok()
+                .header("Docker-Content-Digest", digest)
+                .header("Content-Length", String.valueOf(size))
+                .header("Content-Type", "application/octet-stream")
+                .build();
     }
 
     @Override
@@ -47,11 +55,6 @@ public class BlobsController implements BlobsApi {
     @Override
     public ResponseEntity<Resource> getBlob(String name, String digest) {
         return BlobsApi.super.getBlob(name, digest);
-    }
-
-    @Override
-    public ResponseEntity<Void> getBlobUploadStatus(String name, String uuid) {
-        return BlobsApi.super.getBlobUploadStatus(name, uuid);
     }
 
     @Override

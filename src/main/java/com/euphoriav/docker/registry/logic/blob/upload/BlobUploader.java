@@ -8,9 +8,9 @@ import java.util.UUID;
 public interface BlobUploader {
     void initUpload(UUID id) throws IOException;
 
-    void uploadChunk(UUID id, InputStream inputStream, long offset) throws IOException;
+    void delete(UUID id);
 
-    long getSize(UUID id) throws IOException;
+    void uploadChunk(UUID id, InputStream inputStream, long offset) throws IOException;
 
     String computeDigest(UUID id) throws NoSuchAlgorithmException, IOException;
 }

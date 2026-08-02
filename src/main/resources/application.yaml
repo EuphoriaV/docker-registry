@@ -11,3 +11,7 @@ spring:
       maximum-pool-size: 10
 server:
   port: 5000
+app:
+  clear-uploads:
+    cron: 0 22 * * * *
+    ttl-minutes: 60

@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,5 +48,12 @@ public class BlobUploadDao {
         var sql = "delete from registry.blob_upload where id = :id";
         var params = Map.of("id", id);
         jdbcTemplate.update(sql, params);
+    }
+
+    @Log
+    public List<UUID> clearOutdatedUploads(int ttlMinutes) {
+        //language=PostgreSQL
+        var sql = "delete from registry.blob_upload where created_at < now() - interval '%d minutes' returning id".formatted(ttlMinutes);
+        return jdbcTemplate.queryForList(sql, Map.of(), UUID.class);
     }
 }

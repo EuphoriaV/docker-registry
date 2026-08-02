@@ -28,7 +28,7 @@ public class CancelBlobUploadOperation {
         if (blobUploadOptional.isEmpty()) {
             throw new NotFoundException("blob upload unknown to registry", BLOB_UPLOAD_UNKNOWN);
         }
-        blobUploader.delete(id);
         blobUploadDao.delete(id);
+        blobUploader.delete(id);
     }
 }

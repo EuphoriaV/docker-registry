@@ -1,7 +1,8 @@
 package com.euphoriav.docker.registry.logic.blob;
 
-import com.euphoriav.docker.registry.dao.BlobUploadDao;
-import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
+import com.euphoriav.docker.registry.dao.BlobDao;
+import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -9,10 +10,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CheckBlobExistsOperation {
 
-    private final BlobUploader blobUploader;
-    private final BlobUploadDao blobUploadDao;
+    private final BlobDao blobDao;
 
     public long activate(String name, String digest) {
-        return 0;
+        var blobOptional = blobDao.find(digest, name);
+        if (blobOptional.isEmpty()) {
+            throw new NotFoundException("blob unknown to registry", ErrorResponse.ErrorCode.BLOB_UNKNOWN);
+        }
+        return blobOptional.get().getSize();
     }
 }

@@ -1,7 +1,7 @@
 --liquibase formatted sql
 --changeset EuphoriaV:create_registry_lock_table
 
-create table registry_lock
+create table if not exists registry_lock
 (
     lock_key      varchar(36) not null,
     region        varchar(36) not null,

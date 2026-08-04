@@ -65,12 +65,12 @@ public class CompleteBlobUploadOperation {
             throw new InvalidRequestException("provided digest did not match uploaded content", DIGEST_INVALID);
         }
 
-        self.createBlob(blobUpload, digest, size);
+        self.createBlob(blobUpload, digest, size, id);
     }
 
     @Transactional
-    public void createBlob(BlobUpload blobUpload, String digest, long size) {
+    public void createBlob(BlobUpload blobUpload, String digest, long size, UUID id) {
         blobUploadDao.delete(blobUpload.getId());
-        blobDao.create(blobUpload.getRepository(), digest, size);
+        blobDao.create(blobUpload.getRepository(), digest, size, id);
     }
 }

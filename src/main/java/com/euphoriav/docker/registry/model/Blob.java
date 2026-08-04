@@ -7,5 +7,6 @@ public class Blob {
     private long id;
     private String repository;
     private String digest;
+    private String filename;
     private long size;
 }

@@ -300,29 +300,12 @@ paths:
         - Blobs
       summary: Retrieve blob
       operationId: GetBlob
-      description: |
-        Download the blob identified by digest from the registry.
-
-        Blobs include image layers and configuration objects. Clients must use the digest from the manifest to retrieve a blob.
-
-        This endpoint may return a `307 Temporary Redirect` to a CDN or storage location. Clients must follow the redirect to obtain the actual blob content.
-
-        The blob content is typically a gzipped tarball (for layers) or JSON (for configs). The MIME type is usually `application/octet-stream`.
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # GET (download) a blob
-            curl -L \
-              -H "Authorization: Bearer $TOKEN" \
-              https://registry-1.docker.io/v2/library/ubuntu/blobs/sha256:abc123... \
-              -o layer.tar.gz
+      description: Download the blob identified by digest from the registry.
       parameters:
         - name: name
           in: path
           required: true
           description: Repository Name
-          example: library/ubuntu
           schema:
             type: string
         - name: digest
@@ -331,7 +314,6 @@ paths:
           description: Digest of the Blob
           schema:
             type: string
-          example: sha256:abc123def456...
 
       responses:
         "200":
@@ -341,35 +323,19 @@ paths:
               description: Size of the blob in bytes
               schema:
                 type: integer
-              example: 32768
             Content-Type:
               description: MIME type of the blob
               schema:
                 type: string
-              example: application/octet-stream
             Docker-Content-Digest:
               description: Digest of the returned blob
               schema:
                 type: string
-              example: sha256:abc123def456...
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
-              examples:
-                small-layer:
-                  summary: Example binary blob (gzipped tar layer)
-                  value: "<binary data not shown>"
-
-        "307":
-          description: Temporary redirect to blob location
-          headers:
-            Location:
-              description: Redirect URL for blob download (e.g., S3 or CDN)
-              schema:
-                type: string
-              example: https://cdn.docker.io/blobs/library/ubuntu/abc123...
         "401":
           description: Authentication required
         "403":
@@ -378,6 +344,7 @@ paths:
           description: Blob not found
         "429":
           description: Too many requests
+
   /v2/{name}/blobs/uploads/{uuid}:
     put:
       tags:
@@ -511,6 +478,7 @@ paths:
           description: Range error (e.g., chunk out of order)
         "429":
           description: Too many requests
+
     delete:
       tags:
         - Blobs
@@ -543,7 +511,6 @@ paths:
           description: Upload session not found
         "429":
           description: Too many requests
-
 
   /v2/{name}/manifests/{reference}:
     get:

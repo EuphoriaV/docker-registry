@@ -7,5 +7,6 @@ create table if not exists registry.blob
     repository varchar   not null,
     digest     varchar   not null unique,
     size       bigint    not null,
+    filename   varchar   not null,
     created_at timestamp not null default now()
 );

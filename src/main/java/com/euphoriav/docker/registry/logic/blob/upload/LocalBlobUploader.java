@@ -63,4 +63,11 @@ public class LocalBlobUploader implements BlobUploader {
 
         return "sha256:" + HexFormat.of().formatHex(digest.digest());
     }
+
+    @Override
+    public InputStream getInputStream(String filename) throws IOException {
+        var filePath = UPLOADS_PATH.resolve(filename);
+
+        return Files.newInputStream(filePath);
+    }
 }

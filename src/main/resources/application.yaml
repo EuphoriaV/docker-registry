@@ -13,5 +13,5 @@ server:
   port: 5000
 app:
   clear-uploads:
-    cron: 0 22 * * * *
+    cron: 0 0 * * * *
     ttl-minutes: 60

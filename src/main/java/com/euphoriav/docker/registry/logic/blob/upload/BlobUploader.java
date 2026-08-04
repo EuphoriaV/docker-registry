@@ -13,4 +13,6 @@ public interface BlobUploader {
     void uploadChunk(UUID id, InputStream inputStream, long offset) throws IOException;
 
     String computeDigest(UUID id) throws NoSuchAlgorithmException, IOException;
+
+    InputStream getInputStream(String filename) throws IOException;
 }

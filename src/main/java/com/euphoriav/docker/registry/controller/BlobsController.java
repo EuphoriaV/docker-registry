@@ -20,6 +20,7 @@ public class BlobsController implements BlobsApi {
     private final CancelBlobUploadOperation cancelBlobUploadOperation;
     private final CheckBlobExistsOperation checkBlobExistsOperation;
     private final CompleteBlobUploadOperation completeBlobUploadOperation;
+    private final GetBlobOperation getBlobOperation;
     private final InitiateBlobUploadOperation initiateBlobUploadOperation;
     private final UploadBlobChunkOperation uploadBlobChunkOperation;
     private final NativeWebRequest nativeWebRequest;
@@ -56,7 +57,11 @@ public class BlobsController implements BlobsApi {
     @Log
     @Override
     public ResponseEntity<Resource> getBlob(String name, String digest) {
-        return BlobsApi.super.getBlob(name, digest);
+        var response = getBlobOperation.activate(name, digest);
+        return ResponseEntity.ok()
+                .header("Docker-Content-Digest", digest)
+                .header("Content-Length", String.valueOf(response.size()))
+                .body(response.resource());
     }
 
     @Log

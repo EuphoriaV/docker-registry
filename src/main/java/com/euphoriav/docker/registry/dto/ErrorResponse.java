@@ -3,7 +3,7 @@ package com.euphoriav.docker.registry.dto;
 import java.util.List;
 
 public record ErrorResponse(List<ErrorDto> errors) {
-    public record ErrorDto(ErrorCode code, String message, String details) {
+    public record ErrorDto(ErrorCode code, String message, String detail) {
     }
 
     public enum ErrorCode {

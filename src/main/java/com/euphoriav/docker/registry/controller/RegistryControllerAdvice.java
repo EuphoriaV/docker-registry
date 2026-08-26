@@ -52,6 +52,6 @@ public class RegistryControllerAdvice {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public String handle(Exception e) {
         log.error("Server error occurred", e);
-        return "Ошибка сервера";
+        return "Server error";
     }
 }

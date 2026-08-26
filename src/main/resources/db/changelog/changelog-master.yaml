@@ -1,4 +1,13 @@
 databaseChangeLog:
-  - includeAll:
-      path: sql
+  - include:
+      file: sql/create_registry_schema.sql
+      relativeToChangelogFile: true
+  - include:
+      file: sql/create_registry_lock_table.sql
+      relativeToChangelogFile: true
+  - include:
+      file: sql/create_blob_table.sql
+      relativeToChangelogFile: true
+  - include:
+      file: sql/create_blob_upload_table.sql
       relativeToChangelogFile: true

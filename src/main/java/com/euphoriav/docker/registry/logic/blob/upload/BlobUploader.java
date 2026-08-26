@@ -8,7 +8,7 @@ import java.util.UUID;
 public interface BlobUploader {
     void initUpload(UUID id) throws IOException;
 
-    void delete(UUID id);
+    void delete(UUID id) throws IOException;
 
     void uploadChunk(UUID id, InputStream inputStream, long offset) throws IOException;
 

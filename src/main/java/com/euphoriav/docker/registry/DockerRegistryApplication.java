@@ -11,5 +11,4 @@ public class DockerRegistryApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(DockerRegistryApplication.class, args);
 	}
-
 }

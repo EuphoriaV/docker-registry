@@ -1,5 +1,6 @@
 package com.euphoriav.docker.registry.logic.blob;
 
+import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobDao;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
 import com.euphoriav.docker.registry.exception.InternalServerException;
@@ -35,6 +36,7 @@ public class CompleteBlobUploadOperation {
     @Autowired
     private CompleteBlobUploadOperation self;
 
+    @ValidName
     public void activate(String name, UUID id, String digest, String range, Resource body, long contentLength) {
         lockService.tryInLock(id, () -> completeUpload(name, id, digest, range, body, contentLength));
     }

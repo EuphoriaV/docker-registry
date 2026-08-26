@@ -7,6 +7,8 @@ import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,24 +18,27 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class RegistryControllerAdvice {
 
     @ExceptionHandler(InvalidRequestException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handle(InvalidRequestException e) {
+    public ResponseEntity<ErrorResponse> handle(InvalidRequestException e) {
         log.warn(e.toString());
-        return e.getErrorResponse();
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(e.getErrorResponse());
     }
 
     @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handle(NotFoundException e) {
+    public ResponseEntity<ErrorResponse> handle(NotFoundException e) {
         log.warn(e.toString());
-        return e.getErrorResponse();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(e.getErrorResponse());
     }
 
     @ExceptionHandler(InvalidRangeException.class)
-    @ResponseStatus(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
-    public ErrorResponse handle(InvalidRangeException e) {
+    public ResponseEntity<ErrorResponse> handle(InvalidRangeException e) {
         log.warn(e.toString());
-        return e.getErrorResponse();
+        return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(e.getErrorResponse());
     }
 
     @ExceptionHandler(InternalServerException.class)

@@ -39,7 +39,7 @@ public class LockService {
                     log.info("unlocked blob_upload with id = {}", id);
                 }
             } else {
-                throw new InvalidRequestException("could not lock upload with id = %s".formatted(id), ErrorResponse.ErrorCode.BLOB_UPLOAD_INVALID);
+                throw new InvalidRequestException("could not lock upload with id = %s".formatted(id), ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

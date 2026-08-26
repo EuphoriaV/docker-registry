@@ -21,6 +21,7 @@ public class BlobsController implements BlobsApi {
     private final CheckBlobExistsOperation checkBlobExistsOperation;
     private final CompleteBlobUploadOperation completeBlobUploadOperation;
     private final GetBlobOperation getBlobOperation;
+    private final GetBlobUploadStatusOperation getBlobUploadStatusOperation;
     private final InitiateBlobUploadOperation initiateBlobUploadOperation;
     private final UploadBlobChunkOperation uploadBlobChunkOperation;
     private final NativeWebRequest nativeWebRequest;
@@ -62,6 +63,17 @@ public class BlobsController implements BlobsApi {
                 .header("Docker-Content-Digest", digest)
                 .header("Content-Length", String.valueOf(response.size()))
                 .body(response.resource());
+    }
+
+    @Log
+    @Override
+    public ResponseEntity<Void> getBlobUploadStatus(String name, UUID uuid) {
+        var lastByte = getBlobUploadStatusOperation.activate(name, uuid);
+        return ResponseEntity.noContent()
+                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, uuid)))
+                .header("Docker-Upload-UUID", uuid.toString())
+                .header("Range", "0-%d".formatted(lastByte))
+                .build();
     }
 
     @Log

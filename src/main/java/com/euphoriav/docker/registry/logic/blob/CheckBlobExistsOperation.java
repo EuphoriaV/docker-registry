@@ -1,5 +1,6 @@
 package com.euphoriav.docker.registry.logic.blob;
 
+import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.NotFoundException;
@@ -12,6 +13,7 @@ public class CheckBlobExistsOperation {
 
     private final BlobDao blobDao;
 
+    @ValidName
     public long activate(String name, String digest) {
         var blobOptional = blobDao.find(digest, name);
         if (blobOptional.isEmpty()) {

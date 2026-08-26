@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class LoggingAspect {
 
     @Before("@annotation(com.euphoriav.docker.registry.aop.annotation.Log)")
-    public void afterCallAt(JoinPoint jp) {
+    public void logMethodArgs(JoinPoint jp) {
         var logger = LoggerFactory.getLogger(jp.getTarget().getClass());
         var method = jp.getSignature().getName();
         var args = Arrays.stream(jp.getArgs())

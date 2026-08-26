@@ -1,5 +1,6 @@
 package com.euphoriav.docker.registry.logic.blob;
 
+import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
@@ -22,6 +23,7 @@ public class UploadBlobChunkOperation {
     private final UploadChunkHelper uploadChunkHelper;
     private final LockService lockService;
 
+    @ValidName
     public long activate(String name, UUID id, Resource body, String range, long contentLength) {
         if (contentLength < 0) {
             throw new InvalidRequestException("content-length header is required", SIZE_INVALID);

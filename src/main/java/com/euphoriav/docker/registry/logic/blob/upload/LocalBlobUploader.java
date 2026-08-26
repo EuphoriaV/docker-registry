@@ -31,9 +31,8 @@ public class LocalBlobUploader implements BlobUploader {
         log.info("Created empty file {}", filePath);
     }
 
-    @SneakyThrows
     @Override
-    public void delete(UUID id) {
+    public void delete(UUID id) throws IOException {
         var filePath = UPLOADS_PATH.resolve(id.toString());
         Files.deleteIfExists(filePath);
         log.info("Deleted file {}", filePath);

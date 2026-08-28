@@ -9,8 +9,15 @@ spring:
     hikari:
       minimum-idle: 1
       maximum-pool-size: 10
+
+springdoc:
+  swagger-ui:
+    url: /openapi.yaml
+    path: /swagger-ui.html
+
 server:
   port: 5000
+
 app:
   clear-uploads:
     cron: 0 0 * * * *

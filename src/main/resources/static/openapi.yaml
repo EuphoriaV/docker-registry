@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   version: "2.0"
-  title: EuphoriaV docker registry API
+  title: EuphoriaV docker registry
   contact:
     email: ilyakuznecov84@gmail.com
     name: Ilya Kuznetsov
@@ -229,7 +229,6 @@ paths:
           description: Name of the target repository
           schema:
             type: string
-
       responses:
         "202":
           description: Upload initiated successfully.
@@ -273,7 +272,6 @@ paths:
           description: Digest of the blob
           schema:
             type: string
-
       responses:
         "200":
           description: Blob exists
@@ -318,7 +316,6 @@ paths:
           description: Digest of the Blob
           schema:
             type: string
-
       responses:
         "200":
           description: Blob content returned directly
@@ -370,7 +367,6 @@ paths:
           schema:
             type: string
             format: uuid
-
       responses:
         "204":
           description: Upload in progress. No body is returned.
@@ -435,7 +431,6 @@ paths:
             schema:
               type: string
               format: binary
-
       responses:
         "201":
           description: Upload completed successfully
@@ -491,7 +486,6 @@ paths:
           schema:
             type: string
           description: Optional. Byte range of the chunk being sent
-
       requestBody:
         required: true
         content:
@@ -499,7 +493,6 @@ paths:
             schema:
               type: string
               format: binary
-
       responses:
         "202":
           description: Chunk accepted and stored
@@ -549,7 +542,6 @@ paths:
           schema:
             type: string
             format: uuid
-
       responses:
         "204":
           description: Upload session cancelled successfully. No body is returned.
@@ -716,121 +708,39 @@ paths:
         - Manifests
       summary: Put image manifest
       operationId: PutImageManifest
-      description: |
-        Upload an image manifest for a given tag or digest. This operation registers a manifest in a repository, allowing it to be pulled using the specified reference.
-
-        This endpoint is typically used after all layer and config blobs have been uploaded to the registry.
-
-        The manifest must conform to the expected schema and media type. For Docker image manifest schema version 2, use:
-        `application/vnd.docker.distribution.manifest.v2+json`
-
-        Requires authentication via a bearer token with `push` scope for the target repository.
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # PUT a manifest (tag = latest)
-            curl -X PUT \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/vnd.docker.distribution.manifest.v2+json" \
-              --data-binary @manifest.json \
-              https://registry-1.docker.io/v2/library/ubuntu/manifests/latest
+      description: Upload an image manifest for a given tag or digest. This operation registers a manifest in a repository, allowing it to be pulled using the specified reference.
       parameters:
         - name: name
           in: path
           required: true
           description: Name of the target Repository
-          example: library/ubuntu
           schema:
             type: string
         - name: reference
           in: path
           required: true
           description: Tag or digest to associate with the uploaded Manifest
-          examples:
-            by-tag:
-              summary: Tag
-              value: latest
-            by-digest:
-              summary: Digest
-              value: sha256:abc123def456...
           schema:
             type: string
-
       requestBody:
         required: true
         content:
           application/vnd.docker.distribution.manifest.v2+json:
             schema:
-              type: object
-              required:
-                - schemaVersion
-                - mediaType
-                - config
-                - layers
-              properties:
-                schemaVersion:
-                  type: integer
-                  example: 2
-                mediaType:
-                  type: string
-                  example: application/vnd.docker.distribution.manifest.v2+json
-                config:
-                  type: object
-                  required:
-                    - mediaType
-                    - size
-                    - digest
-                  properties:
-                    mediaType:
-                      type: string
-                      example: application/vnd.docker.container.image.v1+json
-                    size:
-                      type: integer
-                      example: 7023
-                    digest:
-                      type: string
-                      example: sha256:123456abcdef...
-                layers:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - mediaType
-                      - size
-                      - digest
-                    properties:
-                      mediaType:
-                        type: string
-                        example: application/vnd.docker.image.rootfs.diff.tar.gzip
-                      size:
-                        type: integer
-                        example: 32654
-                      digest:
-                        type: string
-                        example: sha256:abcdef123456...
-
-            examples:
-              sample-manifest:
-                summary: Sample Docker image manifest (schema v2)
-                value:
-                  {
-                    "schemaVersion": 2,
-                    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-                    "config": {
-                      "mediaType": "application/vnd.docker.container.image.v1+json",
-                      "size": 7023,
-                      "digest": "sha256:123456abcdef..."
-                    },
-                    "layers": [
-                      {
-                        "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-                        "size": 32654,
-                        "digest": "sha256:abcdef123456..."
-                      }
-                    ]
-                  }
-
+              type: string
+              format: binary
+          application/vnd.docker.distribution.manifest.list.v2+json:
+            schema:
+              type: string
+              format: binary
+          application/vnd.oci.image.manifest.v1+json:
+            schema:
+              type: string
+              format: binary
+          application/vnd.oci.image.index.v1+json:
+            schema:
+              type: string
+              format: binary
       responses:
         "201":
           description: Manifest created successfully.
@@ -839,17 +749,14 @@ paths:
               description: Digest of the stored manifest.
               schema:
                 type: string
-              example: sha256:abcdef123456...
             Location:
               description: Canonical location of the uploaded manifest.
               schema:
                 type: string
-              example: /v2/library/ubuntu/manifests/latest
             Content-Length:
               description: Always zero.
               schema:
                 type: integer
-              example: 0
         "400":
           description: Invalid name, reference, or manifest.
         "401":
@@ -858,8 +765,6 @@ paths:
           description: Access denied.
         "404":
           description: Repository not found.
-        "405":
-          description: Operation not allowed.
         "429":
           description: Too many requests.
     head:

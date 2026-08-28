@@ -1,4 +1,4 @@
-package com.euphoriav.docker.registry.logic.blob.helper;
+package com.euphoriav.docker.registry.logic.helper;
 
 import org.springframework.stereotype.Component;
 

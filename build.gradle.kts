@@ -44,7 +44,7 @@ tasks.withType<Test> {
 
 openApiGenerate {
     generatorName.set("spring")
-    inputSpec.set("$projectDir/src/main/resources/openapi/distribution-spec.yaml")
+    inputSpec.set("$projectDir/src/main/resources/static/openapi.yaml")
     outputDir.set(layout.buildDirectory.dir("generated").get().asFile.toString())
     apiPackage.set("com.euphoriav.docker.registry.api")
     modelPackage.set("com.euphoriav.docker.registry.model")

@@ -20,26 +20,26 @@ public class LockService {
 
     private final LockRegistry lockRegistry;
 
-    public void tryInLock(UUID id, Runnable runnable) {
-        tryInLock(id, () -> {
+    public void tryInLock(String key, Runnable runnable) {
+        tryInLock(key, () -> {
             runnable.run();
             return null;
         });
     }
 
-    public <T> T tryInLock(UUID id, Supplier<T> supplier) {
-        var lock = lockRegistry.obtain(id.toString());
+    public <T> T tryInLock(String key, Supplier<T> supplier) {
+        var lock = lockRegistry.obtain(key);
         try {
             if (lock.tryLock(LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                 try {
-                    log.info("locked blob_upload with id = {}", id);
+                    log.info("obtained lock with key = {}", key);
                     return supplier.get();
                 } finally {
                     lock.unlock();
-                    log.info("unlocked blob_upload with id = {}", id);
+                    log.info("released lock with key = {}", key);
                 }
             } else {
-                throw new InvalidRequestException("could not lock upload with id = %s".formatted(id), ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);
+                throw new InvalidRequestException("could not obtain lock with key = %s".formatted(key), ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

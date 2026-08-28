@@ -2,7 +2,7 @@ package com.euphoriav.docker.registry.aop;
 
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
-import com.euphoriav.docker.registry.logic.blob.helper.RequestValidator;
+import com.euphoriav.docker.registry.logic.helper.RequestValidator;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;

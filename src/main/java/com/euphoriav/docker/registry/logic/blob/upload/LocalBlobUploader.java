@@ -12,10 +12,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.UUID;
 
 @Slf4j
@@ -48,19 +44,6 @@ public class LocalBlobUploader implements BlobUploader {
             }
         }
         log.info("Upload data to file {}", filePath);
-    }
-
-    @Override
-    public String computeDigest(UUID id) throws NoSuchAlgorithmException, IOException {
-        var filePath = UPLOADS_PATH.resolve(id.toString());
-        var digest = MessageDigest.getInstance("SHA-256");
-
-        try (InputStream in = Files.newInputStream(filePath);
-             DigestInputStream digestIn = new DigestInputStream(in, digest)) {
-            digestIn.transferTo(OutputStream.nullOutputStream());
-        }
-
-        return "sha256:" + HexFormat.of().formatHex(digest.digest());
     }
 
     @Override

@@ -6,4 +6,7 @@ public class InvalidRequestException extends ApiException {
     public InvalidRequestException(String message, ErrorResponse.ErrorCode code) {
         super(message, code);
     }
+    public InvalidRequestException(String message, ErrorResponse.ErrorCode code, String detail) {
+        super(message, code, detail);
+    }
 }

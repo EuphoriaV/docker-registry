@@ -11,3 +11,9 @@ databaseChangeLog:
   - include:
       file: sql/create_blob_upload_table.sql
       relativeToChangelogFile: true
+  - include:
+      file: sql/create_manifest_table.sql
+      relativeToChangelogFile: true
+  - include:
+      file: sql/create_tag_table.sql
+      relativeToChangelogFile: true

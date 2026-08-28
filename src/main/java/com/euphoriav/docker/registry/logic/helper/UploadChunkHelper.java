@@ -1,4 +1,4 @@
-package com.euphoriav.docker.registry.logic.blob.helper;
+package com.euphoriav.docker.registry.logic.helper;
 
 import com.euphoriav.docker.registry.exception.InternalServerException;
 import com.euphoriav.docker.registry.exception.InvalidRangeException;

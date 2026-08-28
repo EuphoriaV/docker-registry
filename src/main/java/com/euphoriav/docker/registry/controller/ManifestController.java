@@ -22,12 +22,6 @@ public class ManifestController implements ManifestsApi {
 
     @Log
     @Override
-    public ResponseEntity<Void> deleteImageManifest(String name, String reference) {
-        return ManifestsApi.super.deleteImageManifest(name, reference);
-    }
-
-    @Log
-    @Override
     public ResponseEntity<GetImageManifest200Response> getImageManifest(String name, String reference, String accept) {
         return ManifestsApi.super.getImageManifest(name, reference, accept);
     }

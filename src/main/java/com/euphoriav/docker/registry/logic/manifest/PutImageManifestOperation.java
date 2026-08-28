@@ -7,7 +7,6 @@ import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.InternalServerException;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.LimitViolationException;
-import com.euphoriav.docker.registry.logic.blob.lock.LockService;
 import com.euphoriav.docker.registry.logic.helper.DigestHelper;
 import com.euphoriav.docker.registry.logic.manifest.validator.AbstractManifestValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,6 @@ public class PutImageManifestOperation {
 
     private final DigestHelper digestHelper;
     private final Map<String, AbstractManifestValidator<?>> manifestValidators;
-    private final LockService lockService;
     private final ManifestDao manifestDao;
     private final TagDao tagDao;
 
@@ -39,10 +37,8 @@ public class PutImageManifestOperation {
     @Autowired
     private PutImageManifestOperation self;
 
-    public PutImageManifestOperation(DigestHelper digestHelper, List<AbstractManifestValidator<?>> manifestValidators,
-                                     LockService lockService, ManifestDao manifestDao, TagDao tagDao) {
+    public PutImageManifestOperation(DigestHelper digestHelper, List<AbstractManifestValidator<?>> manifestValidators, ManifestDao manifestDao, TagDao tagDao) {
         this.digestHelper = digestHelper;
-        this.lockService = lockService;
         this.manifestDao = manifestDao;
         this.tagDao = tagDao;
         this.manifestValidators = new HashMap<>();
@@ -64,10 +60,8 @@ public class PutImageManifestOperation {
             throw new InternalServerException("could not calculate actual digest", e);
         }
 
-        lockService.tryInLock("%s:%s".formatted(name, digest), () -> {
-            validate(name, reference, contentType, data, digest);
-            self.save(name, reference, contentType, data, digest);
-        });
+        validate(name, reference, contentType, data, digest);
+        self.save(name, reference, contentType, data, digest);
         return digest;
     }
 

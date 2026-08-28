@@ -3,12 +3,10 @@ package com.euphoriav.docker.registry.controller;
 import com.euphoriav.docker.registry.aop.annotation.Log;
 import com.euphoriav.docker.registry.api.BlobsApi;
 import com.euphoriav.docker.registry.logic.blob.*;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.NativeWebRequest;
 
 import java.net.URI;
 import java.util.UUID;
@@ -24,7 +22,6 @@ public class BlobsController implements BlobsApi {
     private final GetBlobUploadStatusOperation getBlobUploadStatusOperation;
     private final InitiateBlobUploadOperation initiateBlobUploadOperation;
     private final UploadBlobChunkOperation uploadBlobChunkOperation;
-    private final NativeWebRequest nativeWebRequest;
 
     @Log
     @Override
@@ -49,7 +46,7 @@ public class BlobsController implements BlobsApi {
     @Log
     @Override
     public ResponseEntity<Void> completeBlobUpload(String name, UUID uuid, String digest, String range, Resource body) {
-        completeBlobUploadOperation.activate(name, uuid, digest, range, body, getContentLength());
+        completeBlobUploadOperation.activate(name, uuid, digest, range, body);
         return ResponseEntity.created(URI.create("/v2/%s/blobs/%s".formatted(name, digest)))
                 .header("Docker-Content-Digest", digest)
                 .build();
@@ -90,15 +87,11 @@ public class BlobsController implements BlobsApi {
     @Log
     @Override
     public ResponseEntity<Void> uploadBlobChunk(String name, UUID uuid, Resource body, String range) {
-        var lastByte = uploadBlobChunkOperation.activate(name, uuid, body, range, getContentLength());
+        var lastByte = uploadBlobChunkOperation.activate(name, uuid, body, range);
         return ResponseEntity.accepted()
                 .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, uuid)))
                 .header("Docker-Upload-UUID", uuid.toString())
                 .header("Range", "0-%d".formatted(lastByte))
                 .build();
-    }
-
-    private long getContentLength() {
-        return ((HttpServletRequest) nativeWebRequest.getNativeRequest()).getContentLengthLong();
     }
 }

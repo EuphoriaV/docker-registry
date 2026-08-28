@@ -4,7 +4,7 @@ import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.NotFoundException;
-import com.euphoriav.docker.registry.logic.blob.lock.LockService;
+import com.euphoriav.docker.registry.logic.lock.LockService;
 import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

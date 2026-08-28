@@ -1,4 +1,4 @@
-package com.euphoriav.docker.registry.logic.blob.lock;
+package com.euphoriav.docker.registry.logic.lock;
 
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;

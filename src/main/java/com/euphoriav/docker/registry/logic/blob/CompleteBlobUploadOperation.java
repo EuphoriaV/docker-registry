@@ -9,7 +9,7 @@ import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
 import com.euphoriav.docker.registry.logic.helper.DigestHelper;
 import com.euphoriav.docker.registry.logic.helper.UploadChunkHelper;
-import com.euphoriav.docker.registry.logic.blob.lock.LockService;
+import com.euphoriav.docker.registry.logic.lock.LockService;
 import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
 import com.euphoriav.docker.registry.model.BlobUpload;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +19,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @Component
@@ -37,11 +38,18 @@ public class CompleteBlobUploadOperation {
     private CompleteBlobUploadOperation self;
 
     @ValidName
-    public void activate(String name, UUID id, String digest, String range, Resource body, long contentLength) {
-        lockService.tryInLock(id.toString(), () -> completeUpload(name, id, digest, range, body, contentLength));
+    public void activate(String name, UUID id, String digest, String range, Resource body) {
+        lockService.tryInLock(id.toString(), () -> completeUpload(name, id, digest, range, body));
     }
 
-    private void completeUpload(String name, UUID id, String digest, String range, Resource body, long contentLength) {
+    private void completeUpload(String name, UUID id, String digest, String range, Resource body) {
+        long contentLength;
+        try {
+            contentLength = body == null ? 0 : body.contentLength();
+        } catch (IOException e) {
+            throw new InvalidRequestException("could not get content length", ErrorResponse.ErrorCode.BLOB_UPLOAD_INVALID);
+        }
+
         var blobUploadOptional = blobUploadDao.find(id, name);
         if (blobUploadOptional.isEmpty()) {
             throw new NotFoundException("blob upload unknown to registry", ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);

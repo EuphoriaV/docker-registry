@@ -149,12 +149,12 @@ paths:
               description: MIME type of the blob content
               schema:
                 type: string
-        "404":
-          description: Blob not found
         "401":
           description: Authentication required
         "403":
           description: Access denied
+        "404":
+          description: Blob not found
         "429":
           description: Too many requests
 
@@ -422,56 +422,20 @@ paths:
       x-displayName: Manifests
       summary: Get image manifest
       operationId: GetImageManifest
-      description: |
-        Fetch the manifest identified by `name` and `reference`, where `reference` can be a tag (e.g., `latest`) or a digest (e.g., `sha256:...`).
-
-        The manifest contains metadata about the image, including configuration and layer digests. It is required for pulling images from the registry.
-
-        This endpoint requires authentication. Use the `Authorization: Bearer <token>` header.
-
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # GET a manifest (by tag or digest)
-            curl -H "Authorization: Bearer $TOKEN" \
-                 -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-                 https://registry-1.docker.io/v2/library/ubuntu/manifests/latest
+      description: Fetch the manifest identified by `name` and `reference`, where `reference` can be a tag or a digest.
       parameters:
         - name: name
           in: path
           required: true
           description: Name of the target repository
-          example: library/ubuntu
           schema:
             type: string
         - name: reference
           in: path
           required: true
           description: Tag or digest of the target manifest
-          examples:
-            by-tag:
-              summary: Tag
-              value: latest
-            by-digest:
-              summary: Digest
-              value: sha256:abc123def456...
           schema:
             type: string
-        - name: Accept
-          in: header
-          required: false
-          description: |
-            Media type(s) the client supports for the manifest.
-            
-            The registry supports the following media types:
-            - application/vnd.docker.distribution.manifest.v2+json
-            - application/vnd.docker.distribution.manifest.list.v2+json
-            - application/vnd.oci.image.manifest.v1+json
-            - application/vnd.oci.image.index.v1+json
-          schema:
-            type: string
-
       responses:
         "200":
           description: Manifest fetched successfully.
@@ -487,71 +451,20 @@ paths:
           content:
             application/vnd.docker.distribution.manifest.v2+json:
               schema:
-                type: object
-                required:
-                  - schemaVersion
-                  - mediaType
-                  - config
-                  - layers
-                properties:
-                  schemaVersion:
-                    type: integer
-                    example: 2
-                  mediaType:
-                    type: string
-                    example: application/vnd.docker.distribution.manifest.v2+json
-                  config:
-                    type: object
-                    properties:
-                      mediaType:
-                        type: string
-                        example: application/vnd.docker.container.image.v1+json
-                      size:
-                        type: integer
-                        example: 7023
-                      digest:
-                        type: string
-                        example: sha256:a3f3e...c1234
-                  layers:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        mediaType:
-                          type: string
-                          example: application/vnd.docker.image.rootfs.diff.tar.gzip
-                        size:
-                          type: integer
-                          example: 32654
-                        digest:
-                          type: string
-                          example: sha256:bcf2...78901
-              examples:
-                docker-manifest:
-                  summary: Docker image manifest (schema v2)
-                  value:
-                    {
-                      "schemaVersion": 2,
-                      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-                      "config": {
-                        "mediaType": "application/vnd.docker.container.image.v1+json",
-                        "size": 7023,
-                        "digest": "sha256:123456abcdef..."
-                      },
-                      "layers": [
-                        {
-                          "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-                          "size": 32654,
-                          "digest": "sha256:abcdef123456..."
-                        },
-                        {
-                          "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-                          "size": 16724,
-                          "digest": "sha256:7890abcdef12..."
-                        }
-                      ]
-                    }
-
+                type: string
+                format: binary
+            application/vnd.docker.distribution.manifest.list.v2+json:
+              schema:
+                type: string
+                format: binary
+            application/vnd.oci.image.manifest.v1+json:
+              schema:
+                type: string
+                format: binary
+            application/vnd.oci.image.index.v1+json:
+              schema:
+                type: string
+                format: binary
         "400":
           description: Invalid name or reference.
         "401":
@@ -562,7 +475,6 @@ paths:
           description: Repository or manifest not found.
         "429":
           description: Too many requests.
-
 
     put:
       tags:
@@ -628,58 +540,26 @@ paths:
           description: Repository not found.
         "429":
           description: Too many requests.
+
     head:
       tags:
         - Manifests
       summary: Check if manifest exists
       operationId: HeadImageManifest
-      description: |
-        Use this endpoint to verify whether a manifest exists by tag or digest.
-
-        This is a lightweight operation that returns only headers (no body). It is useful for:
-        - Checking for the existence of a specific image version
-        - Determining the digest or size of a manifest before downloading or deleting
-
-        This endpoint requires authentication with pull scope.
-
+      description: Use this endpoint to verify whether a manifest exists by tag or digest.
       parameters:
         - name: name
           in: path
           required: true
           description: Name of the Repository
-          example: library/ubuntu
           schema:
             type: string
         - name: reference
           in: path
           required: true
           description: Tag or digest to check
-          examples:
-            by-tag:
-              summary: Tag
-              value: latest
-            by-digest:
-              summary: Digest
-              value: sha256:abc123def456...
           schema:
             type: string
-        - name: Accept
-          in: header
-          required: false
-          schema:
-            type: string
-            example: application/vnd.docker.distribution.manifest.v2+json
-          description: |
-            Media type of the manifest to check. The response will match one of the accepted types.
-      x-codeSamples:
-        - lang: Bash
-          label: cURL
-          source: |
-            # HEAD /v2/{name}/manifests/{reference}
-            curl -I \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-              https://registry-1.docker.io/v2/library/ubuntu/manifests/latest
       responses:
         "200":
           description: Manifest exists.
@@ -688,22 +568,21 @@ paths:
               description: Size of the manifest in bytes
               schema:
                 type: integer
-              example: 7082
             Docker-Content-Digest:
               description: Digest of the manifest
               schema:
                 type: string
-              example: sha256:abc123...
             Content-Type:
               description: Media type of the manifest
               schema:
                 type: string
-              example: application/vnd.docker.distribution.manifest.v2+json
-        "404":
-          description: Manifest not found.
+        "400":
+          description: Invalid name or reference.
         "401":
           description: Authentication required.
         "403":
           description: Access denied.
+        "404":
+          description: Manifest not found.
         "429":
           description: Too many requests.

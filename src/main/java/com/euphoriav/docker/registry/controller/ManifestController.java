@@ -2,10 +2,11 @@ package com.euphoriav.docker.registry.controller;
 
 import com.euphoriav.docker.registry.aop.annotation.Log;
 import com.euphoriav.docker.registry.api.ManifestsApi;
+import com.euphoriav.docker.registry.logic.manifest.GetImageManifestOperation;
 import com.euphoriav.docker.registry.logic.manifest.PutImageManifestOperation;
-import com.euphoriav.docker.registry.model.GetImageManifest200Response;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,19 +18,30 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class ManifestController implements ManifestsApi {
 
+    private final GetImageManifestOperation getImageManifestOperation;
     private final PutImageManifestOperation putImageManifestOperation;
     private final NativeWebRequest nativeWebRequest;
 
     @Log
     @Override
-    public ResponseEntity<GetImageManifest200Response> getImageManifest(String name, String reference, String accept) {
-        return ManifestsApi.super.getImageManifest(name, reference, accept);
+    public ResponseEntity<Resource> getImageManifest(String name, String reference) {
+        var manifest = getImageManifestOperation.activate(name, reference);
+        return ResponseEntity.ok()
+                .header("Docker-Content-Digest", manifest.getDigest())
+                .header("Content-Length", String.valueOf(manifest.getSize()))
+                .header("Content-Type", manifest.getMediaType())
+                .body(new ByteArrayResource(manifest.getData()));
     }
 
     @Log
     @Override
-    public ResponseEntity<Void> headImageManifest(String name, String reference, String accept) {
-        return ManifestsApi.super.headImageManifest(name, reference, accept);
+    public ResponseEntity<Void> headImageManifest(String name, String reference) {
+        var manifest = getImageManifestOperation.activate(name, reference);
+        return ResponseEntity.ok()
+                .header("Docker-Content-Digest", manifest.getDigest())
+                .header("Content-Length", String.valueOf(manifest.getSize()))
+                .header("Content-Type", manifest.getMediaType())
+                .build();
     }
 
     @Log

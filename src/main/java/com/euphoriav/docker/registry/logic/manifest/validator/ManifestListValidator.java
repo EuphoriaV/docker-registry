@@ -1,7 +1,9 @@
 package com.euphoriav.docker.registry.logic.manifest.validator;
 
-import com.euphoriav.docker.registry.dao.BlobDao;
+import com.euphoriav.docker.registry.dao.ManifestDao;
+import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.dto.ManifestListDto;
+import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
@@ -10,11 +12,11 @@ import java.util.Set;
 @Component
 public class ManifestListValidator extends AbstractManifestValidator<ManifestListDto> {
 
-    private final BlobDao blobDao;
+    private final ManifestDao manifestDao;
 
-    public ManifestListValidator(ObjectMapper objectMapper, BlobDao blobDao) {
+    public ManifestListValidator(ObjectMapper objectMapper, ManifestDao manifestDao) {
         super(objectMapper);
-        this.blobDao = blobDao;
+        this.manifestDao = manifestDao;
     }
 
     @Override
@@ -32,5 +34,10 @@ public class ManifestListValidator extends AbstractManifestValidator<ManifestLis
 
     @Override
     public void validate(String name, String contentType, ManifestListDto manifest) {
+        manifest.getManifests().forEach(manifestRef -> {
+            if (manifestDao.findByDigest(name, manifestRef.getDigest()).isEmpty()) {
+                throw new InvalidRequestException("manifest references a manifest unknown to registry", ErrorResponse.ErrorCode.MANIFEST_BLOB_UNKNOWN);
+            }
+        });
     }
 }

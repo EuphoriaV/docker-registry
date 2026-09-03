@@ -1,0 +1,540 @@
+openapi: 3.0.3
+info:
+  version: "2.0"
+  title: EuphoriaV docker registry
+  contact:
+    email: ilyakuznecov84@gmail.com
+    name: Ilya Kuznetsov
+  description: Docker registry API based on OCI Distribution Specification
+servers:
+  - description: Local server
+    url: http://localhost:5000
+
+tags:
+
+  - name: Manifests
+    description: Image manifests are JSON documents that describe an image
+
+  - name: Blobs
+    description: Blobs are the binary objects referenced from manifests
+
+paths:
+  /v2/:
+    get:
+      summary: Check API version
+      operationId: CheckApiVersion
+      description: Check that registry supports Distribution API V2
+      responses:
+        "200":
+          description: Registry supports Distribution API V2.
+
+  /v2/{name}/blobs/uploads/:
+    post:
+      tags:
+        - Blobs
+      summary: Initiate blob upload
+      operationId: InitiateBlobUpload
+      description: Initiate an upload session for a blob (layer or config) in a repository.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the target repository
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Upload initiated successfully.
+          headers:
+            Location:
+              description: Upload location URL for `PATCH` or `PUT` requests
+              schema:
+                type: string
+            Docker-Upload-UUID:
+              description: Upload session UUID
+              schema:
+                type: string
+            Range:
+              description: Byte range uploaded so far (inclusive)
+              schema:
+                type: string
+        "401":
+          description: Authentication required.
+        "403":
+          description: Access denied.
+        "429":
+          description: Too many requests.
+
+  /v2/{name}/blobs/{digest}:
+    head:
+      tags:
+        - Blobs
+      summary: Check existence of blob
+      operationId: CheckBlobExists
+      description: Check whether a blob (layer or config) exists in the registry.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the Repository
+          schema:
+            type: string
+        - name: digest
+          in: path
+          required: true
+          description: Digest of the blob
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Blob exists
+          headers:
+            Content-Length:
+              description: Size of the blob in bytes
+              schema:
+                type: integer
+            Docker-Content-Digest:
+              description: Digest of the blob
+              schema:
+                type: string
+            Content-Type:
+              description: MIME type of the blob content
+              schema:
+                type: string
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Blob not found
+        "429":
+          description: Too many requests
+
+    get:
+      tags:
+        - Blobs
+      summary: Retrieve blob
+      operationId: GetBlob
+      description: Download the blob identified by digest from the registry.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Repository Name
+          schema:
+            type: string
+        - name: digest
+          in: path
+          required: true
+          description: Digest of the Blob
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Blob content returned directly
+          headers:
+            Content-Length:
+              description: Size of the blob in bytes
+              schema:
+                type: integer
+            Content-Type:
+              description: MIME type of the blob
+              schema:
+                type: string
+            Docker-Content-Digest:
+              description: Digest of the returned blob
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Blob not found
+        "429":
+          description: Too many requests
+
+  /v2/{name}/blobs/uploads/{uuid}:
+    get:
+      tags:
+        - Blobs
+      summary: Get blob upload status
+      operationId: GetBlobUploadStatus
+      description: Retrieve the current status of an in-progress blob upload.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Repository Name
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          required: true
+          description: Upload session UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Upload in progress. No body is returned.
+          headers:
+            Range:
+              description: Current byte range uploaded (inclusive)
+              schema:
+                type: string
+            Docker-Upload-UUID:
+              description: UUID of the upload session
+              schema:
+                type: string
+            Location:
+              description: URL to continue or complete the upload
+              schema:
+                type: string
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Upload session not found
+        "429":
+          description: Too many requests
+
+    put:
+      tags:
+        - Blobs
+      summary: Complete blob upload
+      operationId: CompleteBlobUpload
+      description: Complete the upload of a blob by finalizing an upload session.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Repository name
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          required: true
+          description: Upload session UUID returned from the POST request
+          schema:
+            type: string
+            format: uuid
+        - name: digest
+          in: query
+          required: true
+          description: Digest of the uploaded blob
+          schema:
+            type: string
+        - name: Content-Range
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional. Byte range of the chunk being sent
+      requestBody:
+        required: false
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: Upload completed successfully
+          headers:
+            Docker-Content-Digest:
+              description: Canonical digest of the stored blob
+              schema:
+                type: string
+            Location:
+              description: URL where the blob is now accessible
+              schema:
+                type: string
+            Content-Length:
+              description: Always zero for completed uploads
+              schema:
+                type: integer
+        "400":
+          description: Invalid digest or missing parameters
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Upload session not found
+        "416":
+          description: Requested range not satisfiable (if used in chunked mode)
+        "429":
+          description: Too many requests
+
+    patch:
+      tags:
+        - Blobs
+      summary: Upload blob chunk
+      operationId: UploadBlobChunk
+      description: Upload a chunk of a blob to an active upload session.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Repository name
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          required: true
+          description: Upload session UUID
+          schema:
+            type: string
+            format: uuid
+        - name: Content-Range
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional. Byte range of the chunk being sent
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "202":
+          description: Chunk accepted and stored
+          headers:
+            Location:
+              description: URL to continue or finalize the upload
+              schema:
+                type: string
+            Range:
+              description: Byte range uploaded so far (inclusive)
+              schema:
+                type: string
+            Docker-Upload-UUID:
+              description: Upload session UUID
+              schema:
+                type: string
+        "400":
+          description: Malformed content or range
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Upload session not found
+        "416":
+          description: Range error (e.g., chunk out of order)
+        "429":
+          description: Too many requests
+
+    delete:
+      tags:
+        - Blobs
+      summary: Cancel blob upload
+      operationId: CancelBlobUpload
+      description: Cancel an in-progress blob upload session.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the repository
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          required: true
+          description: Upload session UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Upload session cancelled successfully. No body is returned.
+        "401":
+          description: Authentication required
+        "403":
+          description: Access denied
+        "404":
+          description: Upload session not found
+        "429":
+          description: Too many requests
+
+  /v2/{name}/manifests/{reference}:
+    get:
+      tags:
+        - Manifests
+      x-displayName: Manifests
+      summary: Get image manifest
+      operationId: GetImageManifest
+      description: Fetch the manifest identified by `name` and `reference`, where `reference` can be a tag or a digest.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the target repository
+          schema:
+            type: string
+        - name: reference
+          in: path
+          required: true
+          description: Tag or digest of the target manifest
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Manifest fetched successfully.
+          headers:
+            Docker-Content-Digest:
+              description: Digest of the returned manifest content.
+              schema:
+                type: string
+            Content-Type:
+              description: Media type of the returned manifest.
+              schema:
+                type: string
+          content:
+            application/vnd.docker.distribution.manifest.v2+json:
+              schema:
+                type: string
+                format: binary
+            application/vnd.docker.distribution.manifest.list.v2+json:
+              schema:
+                type: string
+                format: binary
+            application/vnd.oci.image.manifest.v1+json:
+              schema:
+                type: string
+                format: binary
+            application/vnd.oci.image.index.v1+json:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid name or reference.
+        "401":
+          description: Authentication required.
+        "403":
+          description: Access denied.
+        "404":
+          description: Repository or manifest not found.
+        "429":
+          description: Too many requests.
+
+    put:
+      tags:
+        - Manifests
+      summary: Put image manifest
+      operationId: PutImageManifest
+      description: Upload an image manifest for a given tag or digest. This operation registers a manifest in a repository, allowing it to be pulled using the specified reference.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the target Repository
+          schema:
+            type: string
+        - name: reference
+          in: path
+          required: true
+          description: Tag or digest to associate with the uploaded Manifest
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/vnd.docker.distribution.manifest.v2+json:
+            schema:
+              type: string
+              format: binary
+          application/vnd.docker.distribution.manifest.list.v2+json:
+            schema:
+              type: string
+              format: binary
+          application/vnd.oci.image.manifest.v1+json:
+            schema:
+              type: string
+              format: binary
+          application/vnd.oci.image.index.v1+json:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: Manifest created successfully.
+          headers:
+            Docker-Content-Digest:
+              description: Digest of the stored manifest.
+              schema:
+                type: string
+            Location:
+              description: Canonical location of the uploaded manifest.
+              schema:
+                type: string
+            Content-Length:
+              description: Always zero.
+              schema:
+                type: integer
+        "400":
+          description: Invalid name, reference, or manifest.
+        "401":
+          description: Authentication required.
+        "403":
+          description: Access denied.
+        "404":
+          description: Repository not found.
+        "429":
+          description: Too many requests.
+
+    head:
+      tags:
+        - Manifests
+      summary: Check if manifest exists
+      operationId: HeadImageManifest
+      description: Use this endpoint to verify whether a manifest exists by tag or digest.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the Repository
+          schema:
+            type: string
+        - name: reference
+          in: path
+          required: true
+          description: Tag or digest to check
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Manifest exists.
+          headers:
+            Content-Length:
+              description: Size of the manifest in bytes
+              schema:
+                type: integer
+            Docker-Content-Digest:
+              description: Digest of the manifest
+              schema:
+                type: string
+            Content-Type:
+              description: Media type of the manifest
+              schema:
+                type: string
+        "400":
+          description: Invalid name or reference.
+        "401":
+          description: Authentication required.
+        "403":
+          description: Access denied.
+        "404":
+          description: Manifest not found.
+        "429":
+          description: Too many requests.

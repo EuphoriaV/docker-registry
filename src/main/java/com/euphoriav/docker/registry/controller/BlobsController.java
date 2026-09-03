@@ -69,7 +69,7 @@ public class BlobsController implements BlobsApi {
         return ResponseEntity.noContent()
                 .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, uuid)))
                 .header("Docker-Upload-UUID", uuid.toString())
-                .header("Range", "0-%d".formatted(lastByte))
+                .header("Range", "0-%d".formatted(lastByte - 1))
                 .build();
     }
 

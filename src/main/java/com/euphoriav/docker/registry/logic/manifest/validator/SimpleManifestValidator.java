@@ -34,6 +34,9 @@ public class SimpleManifestValidator extends AbstractManifestValidator<SimpleMan
 
     @Override
     public void validate(String name, String contentType, SimpleManifestDto manifest) {
+        if (manifest.getConfig() == null || manifest.getLayers() == null) {
+            throw new InvalidRequestException("manifest contains null config or layers", ErrorResponse.ErrorCode.MANIFEST_INVALID);
+        }
         if (blobDao.find(manifest.getConfig().getDigest(), name).isEmpty()) {
             throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorResponse.ErrorCode.MANIFEST_BLOB_UNKNOWN);
         }

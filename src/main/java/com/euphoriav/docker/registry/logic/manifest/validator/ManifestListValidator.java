@@ -34,6 +34,9 @@ public class ManifestListValidator extends AbstractManifestValidator<ManifestLis
 
     @Override
     public void validate(String name, String contentType, ManifestListDto manifest) {
+        if (manifest.getManifests() == null) {
+            throw new InvalidRequestException("manifests section is null", ErrorResponse.ErrorCode.MANIFEST_INVALID);
+        }
         manifest.getManifests().forEach(manifestRef -> {
             if (manifestDao.findByDigest(name, manifestRef.getDigest()).isEmpty()) {
                 throw new InvalidRequestException("manifest references a manifest unknown to registry", ErrorResponse.ErrorCode.MANIFEST_BLOB_UNKNOWN);

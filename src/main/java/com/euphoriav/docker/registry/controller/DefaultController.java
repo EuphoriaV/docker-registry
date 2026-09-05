@@ -1,15 +1,17 @@
 package com.euphoriav.docker.registry.controller;
 
 import com.euphoriav.docker.registry.aop.annotation.Log;
-import com.euphoriav.docker.registry.api.DefaultApi;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class DefaultController implements DefaultApi {
+@RequestMapping("/v2/")
+public class DefaultController {
 
     @Log
-    @Override
+    @GetMapping
     public ResponseEntity<Void> checkApiVersion() {
         return ResponseEntity.ok().build();
     }

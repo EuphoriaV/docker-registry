@@ -17,15 +17,15 @@ public class BlobDao {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    @Log
+    @Log(isDebug = true)
     public void create(String repository, String digest, long size, UUID id) {
         //language=PostgreSQL
-        var sql = "insert into registry.blob(repository, digest, size, filename) values (:repository, :digest, :size, :filename) on conflict (repository, digest) do nothing ";
+        var sql = "insert into registry.blob(repository, digest, size, filename) values (:repository, :digest, :size, :filename)";
         var params = Map.of("repository", repository, "digest", digest, "size", size, "filename", id.toString());
         jdbcTemplate.update(sql, params);
     }
 
-    @Log
+    @Log(isDebug = true)
     public Optional<Blob> find(String digest, String repository) {
         //language=PostgreSQL
         var sql = "select * from registry.blob where digest = :digest and repository = :repository";

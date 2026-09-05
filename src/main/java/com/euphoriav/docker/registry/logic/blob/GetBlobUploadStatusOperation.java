@@ -1,6 +1,5 @@
 package com.euphoriav.docker.registry.logic.blob;
 
-import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.NotFoundException;
@@ -15,7 +14,6 @@ public class GetBlobUploadStatusOperation {
 
     private final BlobUploadDao blobUploadDao;
 
-    @ValidName
     public long activate(String name, UUID id) {
         var blobUploadOptional = blobUploadDao.find(id, name);
         if (blobUploadOptional.isEmpty()) {

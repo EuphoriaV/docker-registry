@@ -1,11 +1,10 @@
 package com.euphoriav.docker.registry.logic.blob;
 
-import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.NotFoundException;
-import com.euphoriav.docker.registry.logic.lock.LockService;
 import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
+import com.euphoriav.docker.registry.logic.lock.LockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,6 @@ public class CancelBlobUploadOperation {
     private final BlobUploadDao blobUploadDao;
     private final LockService lockService;
 
-    @ValidName
     public void activate(String name, UUID id) {
         lockService.tryInLock(id.toString(), () -> cancelUpload(name, id));
     }

@@ -1,6 +1,5 @@
 package com.euphoriav.docker.registry.logic.manifest;
 
-import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.ManifestDao;
 import com.euphoriav.docker.registry.dao.TagDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
@@ -49,7 +48,6 @@ public class PutImageManifestOperation {
         });
     }
 
-    @ValidName
     public String activate(String name, String reference, Resource resource, String contentType) {
         String digest;
         byte[] data;

@@ -1,5 +1,6 @@
 package com.euphoriav.docker.registry.aop;
 
+import com.euphoriav.docker.registry.aop.annotation.Log;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -13,13 +14,17 @@ import java.util.stream.Collectors;
 @Component
 public class LoggingAspect {
 
-    @Before("@annotation(com.euphoriav.docker.registry.aop.annotation.Log)")
-    public void logMethodArgs(JoinPoint jp) {
+    @Before("@annotation(log)")
+    public void logMethodArgs(JoinPoint jp, Log log) {
         var logger = LoggerFactory.getLogger(jp.getTarget().getClass());
         var method = jp.getSignature().getName();
         var args = Arrays.stream(jp.getArgs())
                 .map(String::valueOf)
                 .collect(Collectors.joining(", "));
-        logger.info("{}({})", method, args);
+        if (log.isDebug()) {
+            logger.debug("{}({})", method, args);
+        } else {
+            logger.info("{}({})", method, args);
+        }
     }
 }

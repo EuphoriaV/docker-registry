@@ -1,16 +1,15 @@
 package com.euphoriav.docker.registry.logic.blob;
 
-import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobDao;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.InternalServerException;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
+import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
 import com.euphoriav.docker.registry.logic.helper.DigestHelper;
 import com.euphoriav.docker.registry.logic.helper.UploadChunkHelper;
 import com.euphoriav.docker.registry.logic.lock.LockService;
-import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
 import com.euphoriav.docker.registry.model.BlobUpload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +36,6 @@ public class CompleteBlobUploadOperation {
     @Autowired
     private CompleteBlobUploadOperation self;
 
-    @ValidName
     public void activate(String name, UUID id, String digest, String range, Resource body) {
         lockService.tryInLock(id.toString(), () -> completeUpload(name, id, digest, range, body));
     }

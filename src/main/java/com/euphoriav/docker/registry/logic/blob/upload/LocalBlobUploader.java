@@ -1,6 +1,5 @@
 package com.euphoriav.docker.registry.logic.blob.upload;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,14 +23,14 @@ public class LocalBlobUploader implements BlobUploader {
     public void initUpload(UUID id) throws IOException {
         var filePath = UPLOADS_PATH.resolve(id.toString());
         Files.createFile(filePath);
-        log.info("Created empty file {}", filePath);
+        log.debug("Created empty file {}", filePath);
     }
 
     @Override
     public void delete(UUID id) throws IOException {
         var filePath = UPLOADS_PATH.resolve(id.toString());
         Files.deleteIfExists(filePath);
-        log.info("Deleted file {}", filePath);
+        log.debug("Deleted file {}", filePath);
     }
 
     @Override
@@ -43,7 +42,7 @@ public class LocalBlobUploader implements BlobUploader {
                 inputStream.transferTo(out);
             }
         }
-        log.info("Upload data to file {}", filePath);
+        log.debug("Upload data to file {}", filePath);
     }
 
     @Override

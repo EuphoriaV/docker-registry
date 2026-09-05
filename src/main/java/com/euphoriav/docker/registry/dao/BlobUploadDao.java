@@ -18,7 +18,7 @@ public class BlobUploadDao {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    @Log
+    @Log(isDebug = true)
     public void insert(UUID id, String repository) {
         //language=PostgreSQL
         var sql = "insert into registry.blob_upload(id, repository) values (:id, :repository)";
@@ -26,7 +26,7 @@ public class BlobUploadDao {
         jdbcTemplate.update(sql, params);
     }
 
-    @Log
+    @Log(isDebug = true)
     public Optional<BlobUpload> find(UUID id, String repository) {
         //language=PostgreSQL
         var sql = "select * from registry.blob_upload where id = :id and repository = :repository";
@@ -34,7 +34,7 @@ public class BlobUploadDao {
         return jdbcTemplate.query(sql, params, BeanPropertyRowMapper.newInstance(BlobUpload.class)).stream().findFirst();
     }
 
-    @Log
+    @Log(isDebug = true)
     public void updateBytesReceived(UUID id, long bytesReceived) {
         //language=PostgreSQL
         var sql = "update registry.blob_upload set bytes_received = bytes_received + :bytesReceived where id = :id";
@@ -42,7 +42,7 @@ public class BlobUploadDao {
         jdbcTemplate.update(sql, params);
     }
 
-    @Log
+    @Log(isDebug = true)
     public void delete(UUID id) {
         //language=PostgreSQL
         var sql = "delete from registry.blob_upload where id = :id";
@@ -50,7 +50,7 @@ public class BlobUploadDao {
         jdbcTemplate.update(sql, params);
     }
 
-    @Log
+    @Log(isDebug = true)
     public List<UUID> clearOutdatedUploads(int ttlMinutes) {
         //language=PostgreSQL
         var sql = "delete from registry.blob_upload where created_at < now() - interval '%d minutes' returning id".formatted(ttlMinutes);

@@ -371,7 +371,6 @@ paths:
     get:
       tags:
         - Manifests
-      x-displayName: Manifests
       summary: Get image manifest
       operationId: GetImageManifest
       description: Fetch the manifest identified by `name` and `reference`, where `reference` can be a tag or a digest.

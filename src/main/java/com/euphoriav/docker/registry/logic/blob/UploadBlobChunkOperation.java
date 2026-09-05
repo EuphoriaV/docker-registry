@@ -1,6 +1,5 @@
 package com.euphoriav.docker.registry.logic.blob;
 
-import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
@@ -22,7 +21,6 @@ public class UploadBlobChunkOperation {
     private final UploadChunkHelper uploadChunkHelper;
     private final LockService lockService;
 
-    @ValidName
     public long activate(String name, UUID id, Resource body, String range) {
         return lockService.tryInLock(id.toString(), () -> uploadChunk(name, id, body, range));
     }

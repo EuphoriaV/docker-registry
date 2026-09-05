@@ -32,11 +32,11 @@ public class LockService {
         try {
             if (lock.tryLock(LOCK_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                 try {
-                    log.info("obtained lock with key = {}", key);
+                    log.debug("obtained lock with key = {}", key);
                     return supplier.get();
                 } finally {
                     lock.unlock();
-                    log.info("released lock with key = {}", key);
+                    log.debug("released lock with key = {}", key);
                 }
             } else {
                 throw new InvalidRequestException("could not obtain lock with key = %s".formatted(key), ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);

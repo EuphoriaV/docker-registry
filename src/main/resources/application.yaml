@@ -9,6 +9,9 @@ spring:
     hikari:
       minimum-idle: 1
       maximum-pool-size: 10
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
 
 springdoc:
   swagger-ui:

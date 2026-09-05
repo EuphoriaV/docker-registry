@@ -2,7 +2,6 @@ package com.euphoriav.docker.registry.dao;
 
 
 import com.euphoriav.docker.registry.aop.annotation.Log;
-import com.euphoriav.docker.registry.model.BlobUpload;
 import com.euphoriav.docker.registry.model.Manifest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -18,7 +17,7 @@ public class ManifestDao {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    @Log
+    @Log(isDebug = true)
     public void create(String repository, String digest, byte[] data, String contentType) {
         //language=PostgreSQL
         var sql = "insert into registry.manifest(repository, digest, data, media_type, size, updated_at) values (:repository, :digest, :data, :mediaType, :size, now()) on conflict (repository, digest) do nothing";
@@ -26,7 +25,7 @@ public class ManifestDao {
         jdbcTemplate.update(sql, params);
     }
 
-    @Log
+    @Log(isDebug = true)
     public Optional<Manifest> findByDigest(String repository, String digest) {
         //language=PostgreSQL
         var sql = "select * from registry.manifest where repository = :repository and digest = :digest";
@@ -34,7 +33,7 @@ public class ManifestDao {
         return jdbcTemplate.query(sql, params, BeanPropertyRowMapper.newInstance(Manifest.class)).stream().findFirst();
     }
 
-    @Log
+    @Log(isDebug = true)
     public Optional<Manifest> findByTag(String repository, String tag) {
         //language=PostgreSQL
         var sql = "select m.id, m.repository, m.digest, m.data, m.media_type, m.size from registry.manifest m join registry.tag t using (repository, digest) where t.repository = :repository and t.tag = :tag";

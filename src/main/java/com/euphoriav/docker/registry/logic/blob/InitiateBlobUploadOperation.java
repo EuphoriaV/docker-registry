@@ -1,6 +1,5 @@
 package com.euphoriav.docker.registry.logic.blob;
 
-import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
 import com.euphoriav.docker.registry.exception.InternalServerException;
 import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
@@ -16,7 +15,6 @@ public class InitiateBlobUploadOperation {
     private final BlobUploader blobUploader;
     private final BlobUploadDao blobUploadDao;
 
-    @ValidName
     public UUID activate(String name) {
         var id = UUID.randomUUID();
         blobUploadDao.insert(id, name);

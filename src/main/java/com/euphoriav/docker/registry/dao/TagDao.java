@@ -1,6 +1,5 @@
 package com.euphoriav.docker.registry.dao;
 
-
 import com.euphoriav.docker.registry.aop.annotation.Log;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -14,7 +13,7 @@ public class TagDao {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    @Log
+    @Log(isDebug = true)
     public void create(String repository, String digest, String tag) {
         //language=PostgreSQL
         var sql = "insert into registry.tag(repository, digest, tag, updated_at) values (:repository, :digest, :tag, now()) on conflict (repository, tag) do update set digest = :digest, updated_at = now()";

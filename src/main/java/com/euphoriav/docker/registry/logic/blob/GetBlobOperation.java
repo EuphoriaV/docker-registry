@@ -1,6 +1,5 @@
 package com.euphoriav.docker.registry.logic.blob;
 
-import com.euphoriav.docker.registry.aop.annotation.ValidName;
 import com.euphoriav.docker.registry.dao.BlobDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
 import com.euphoriav.docker.registry.exception.InternalServerException;
@@ -20,7 +19,6 @@ public class GetBlobOperation {
     private final BlobUploader blobUploader;
     private final BlobDao blobDao;
 
-    @ValidName
     public Response activate(String name, String digest) {
         var blobOptional = blobDao.find(digest, name);
         if (blobOptional.isEmpty()) {

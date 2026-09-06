@@ -27,8 +27,8 @@ public class LocalBlobUploader implements BlobUploader {
     }
 
     @Override
-    public void delete(UUID id) throws IOException {
-        var filePath = UPLOADS_PATH.resolve(id.toString());
+    public void delete(String filename) throws IOException {
+        var filePath = UPLOADS_PATH.resolve(filename);
         Files.deleteIfExists(filePath);
         log.debug("Deleted file {}", filePath);
     }

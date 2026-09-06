@@ -12,15 +12,18 @@ import com.euphoriav.docker.registry.logic.helper.UploadChunkHelper;
 import com.euphoriav.docker.registry.logic.lock.LockService;
 import com.euphoriav.docker.registry.model.BlobUpload;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CompleteBlobUploadOperation {
@@ -79,6 +82,15 @@ public class CompleteBlobUploadOperation {
     @Transactional
     public void createBlob(BlobUpload blobUpload, String digest, long size, UUID id) {
         blobUploadDao.delete(blobUpload.getId());
-        blobDao.create(blobUpload.getRepository(), digest, size, id);
+        try {
+            blobDao.create(blobUpload.getRepository(), digest, size, id);
+        } catch (DuplicateKeyException e) {
+            log.warn("duplicate digest {}", digest);
+            try {
+                blobUploader.delete(id.toString());
+            } catch (IOException ex) {
+                log.error("failed to delete file", e);
+            }
+        }
     }
 }

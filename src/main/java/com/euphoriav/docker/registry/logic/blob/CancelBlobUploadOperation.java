@@ -31,7 +31,7 @@ public class CancelBlobUploadOperation {
         }
         blobUploadDao.delete(id);
         try {
-            blobUploader.delete(id);
+            blobUploader.delete(id.toString());
         } catch (Exception e) {
             log.error("failed to delete file", e);
         }

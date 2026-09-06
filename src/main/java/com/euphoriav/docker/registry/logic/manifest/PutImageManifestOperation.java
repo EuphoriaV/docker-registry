@@ -58,12 +58,12 @@ public class PutImageManifestOperation {
             throw new InternalServerException("could not calculate actual digest", e);
         }
 
-        validate(name, reference, contentType, data, digest);
-        self.save(name, reference, contentType, data, digest);
+        self.process(name, reference, contentType, data, digest);
         return digest;
     }
 
-    private void validate(String name, String reference, String contentType, byte[] data, String digest) {
+    @Transactional
+    public void process(String name, String reference, String contentType, byte[] data, String digest) {
         if (data.length > MANIFEST_MAX_SIZE_BYTES) {
             throw new LimitViolationException("manifest is too large");
         }
@@ -82,10 +82,11 @@ public class PutImageManifestOperation {
             throw new InvalidRequestException("unsupported media type", ErrorResponse.ErrorCode.MANIFEST_INVALID);
         }
         validator.validate(name, contentType, data);
-    }
-
-    @Transactional
-    public void save(String name, String reference, String contentType, byte[] data, String digest) {
+        try {
+            Thread.sleep(30000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         manifestDao.create(name, digest, data, contentType);
         if (!reference.equals(digest)) {
             tagDao.create(name, digest, reference);

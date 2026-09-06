@@ -28,8 +28,24 @@ public class BlobDao {
     @Log(isDebug = true)
     public Optional<Blob> find(String digest, String repository) {
         //language=PostgreSQL
-        var sql = "select * from registry.blob where digest = :digest and repository = :repository";
+        var sql = "select * from registry.blob where digest = :digest and repository = :repository for share";
         var params = Map.of("digest", digest, "repository", repository);
         return jdbcTemplate.query(sql, params, BeanPropertyRowMapper.newInstance(Blob.class)).stream().findFirst();
+    }
+
+    @Log(isDebug = true)
+    public Optional<Blob> findForUpdate(String digest, String repository) {
+        //language=PostgreSQL
+        var sql = "select * from registry.blob where digest = :digest and repository = :repository for update";
+        var params = Map.of("digest", digest, "repository", repository);
+        return jdbcTemplate.query(sql, params, BeanPropertyRowMapper.newInstance(Blob.class)).stream().findFirst();
+    }
+
+    @Log(isDebug = true)
+    public void delete(String repository, String digest) {
+        //language=PostgreSQL
+        var sql = "delete from registry.blob where repository = :repository and digest = :digest";
+        var params = Map.of("repository", repository, "digest", digest);
+        jdbcTemplate.update(sql, params);
     }
 }

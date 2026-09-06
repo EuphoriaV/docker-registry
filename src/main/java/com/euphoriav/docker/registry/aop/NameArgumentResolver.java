@@ -24,9 +24,9 @@ public class NameArgumentResolver implements HandlerMethodArgumentResolver {
 
     private static final List<Pattern> PATH_PATTERNS = List.of(
             Pattern.compile("^/v2/(.+)/blobs/uploads/$"),
-            Pattern.compile("^/v2/(.+)/blobs/uploads/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"),
-            Pattern.compile("^/v2/(.+)/blobs/sha256:[a-zA-Z0-9]{64}$"),
-            Pattern.compile("^/v2/(.+)/manifests/.*$")
+            Pattern.compile("^/v2/(.+)/blobs/uploads/.+$"),
+            Pattern.compile("^/v2/(.+)/blobs/.+$"),
+            Pattern.compile("^/v2/(.+)/manifests/.+$")
     );
 
     @Override

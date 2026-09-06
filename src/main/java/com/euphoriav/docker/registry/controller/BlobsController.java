@@ -16,13 +16,51 @@ import java.util.UUID;
 @RequestMapping("/v2/**/blobs/")
 public class BlobsController {
 
-    private final CancelBlobUploadOperation cancelBlobUploadOperation;
-    private final CheckBlobExistsOperation checkBlobExistsOperation;
-    private final CompleteBlobUploadOperation completeBlobUploadOperation;
-    private final GetBlobOperation getBlobOperation;
-    private final GetBlobUploadStatusOperation getBlobUploadStatusOperation;
     private final InitiateBlobUploadOperation initiateBlobUploadOperation;
+    private final GetBlobUploadStatusOperation getBlobUploadStatusOperation;
     private final UploadBlobChunkOperation uploadBlobChunkOperation;
+    private final CancelBlobUploadOperation cancelBlobUploadOperation;
+    private final CompleteBlobUploadOperation completeBlobUploadOperation;
+    private final CheckBlobExistsOperation checkBlobExistsOperation;
+    private final GetBlobOperation getBlobOperation;
+    private final DeleteBlobOperation deleteBlobOperation;
+
+    @Log
+    @PostMapping("/uploads/")
+    public ResponseEntity<Void> initiateBlobUpload(@Name String name) {
+        var id = initiateBlobUploadOperation.activate(name);
+        return ResponseEntity.accepted()
+                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, id)))
+                .header("Docker-Upload-UUID", id.toString())
+                .header("Range", "0-0")
+                .build();
+    }
+
+    @Log
+    @GetMapping("/uploads/{uuid}")
+    public ResponseEntity<Void> getBlobUploadStatus(@Name String name, @PathVariable("uuid") UUID uuid) {
+        var lastByte = getBlobUploadStatusOperation.activate(name, uuid);
+        return ResponseEntity.noContent()
+                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, uuid)))
+                .header("Docker-Upload-UUID", uuid.toString())
+                .header("Range", "0-%d".formatted(lastByte - 1))
+                .build();
+    }
+
+    @Log
+    @PatchMapping(
+            value = "/uploads/{uuid}",
+            consumes = {"application/octet-stream"}
+    )
+    public ResponseEntity<Void> uploadBlobChunk(@Name String name, @PathVariable("uuid") UUID uuid, @RequestBody Resource body,
+                                                @RequestHeader(value = "Content-Range", required = false) String range) {
+        var lastByte = uploadBlobChunkOperation.activate(name, uuid, body, range);
+        return ResponseEntity.accepted()
+                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, uuid)))
+                .header("Docker-Upload-UUID", uuid.toString())
+                .header("Range", "0-%d".formatted(lastByte))
+                .build();
+    }
 
     @Log
     @DeleteMapping("/uploads/{uuid}")
@@ -30,20 +68,6 @@ public class BlobsController {
         cancelBlobUploadOperation.activate(name, uuid);
         return ResponseEntity.noContent()
                 .header("Docker-Upload-UUID", uuid.toString())
-                .build();
-    }
-
-    @Log
-    @RequestMapping(
-            method = RequestMethod.HEAD,
-            value = "/{digest}"
-    )
-    public ResponseEntity<Void> checkBlobExists(@Name String name, @PathVariable("digest") String digest) {
-        var size = checkBlobExistsOperation.activate(name, digest);
-        return ResponseEntity.ok()
-                .header("Docker-Content-Digest", digest)
-                .header("Content-Length", String.valueOf(size))
-                .header("Content-Type", "application/octet-stream")
                 .build();
     }
 
@@ -62,6 +86,20 @@ public class BlobsController {
     }
 
     @Log
+    @RequestMapping(
+            method = RequestMethod.HEAD,
+            value = "/{digest}"
+    )
+    public ResponseEntity<Void> checkBlobExists(@Name String name, @PathVariable("digest") String digest) {
+        var size = checkBlobExistsOperation.activate(name, digest);
+        return ResponseEntity.ok()
+                .header("Docker-Content-Digest", digest)
+                .header("Content-Length", String.valueOf(size))
+                .header("Content-Type", "application/octet-stream")
+                .build();
+    }
+
+    @Log
     @GetMapping(
             value = "/{digest}",
             produces = {"application/octet-stream"}
@@ -75,39 +113,11 @@ public class BlobsController {
     }
 
     @Log
-    @GetMapping("/uploads/{uuid}")
-    public ResponseEntity<Void> getBlobUploadStatus(@Name String name, @PathVariable("uuid") UUID uuid) {
-        var lastByte = getBlobUploadStatusOperation.activate(name, uuid);
-        return ResponseEntity.noContent()
-                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, uuid)))
-                .header("Docker-Upload-UUID", uuid.toString())
-                .header("Range", "0-%d".formatted(lastByte - 1))
-                .build();
-    }
-
-    @Log
-    @PostMapping("/uploads/")
-    public ResponseEntity<Void> initiateBlobUpload(@Name String name) {
-        var id = initiateBlobUploadOperation.activate(name);
+    @DeleteMapping("/{digest}")
+    public ResponseEntity<Resource> deleteBlob(@Name String name, @PathVariable("digest") String digest) {
+        deleteBlobOperation.activate(name, digest);
         return ResponseEntity.accepted()
-                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, id)))
-                .header("Docker-Upload-UUID", id.toString())
-                .header("Range", "0-0")
-                .build();
-    }
-
-    @Log
-    @PatchMapping(
-            value = "/uploads/{uuid}",
-            consumes = {"application/octet-stream"}
-    )
-    public ResponseEntity<Void> uploadBlobChunk(@Name String name, @PathVariable("uuid") UUID uuid, @RequestBody Resource body,
-                                                @RequestHeader(value = "Content-Range", required = false) String range) {
-        var lastByte = uploadBlobChunkOperation.activate(name, uuid, body, range);
-        return ResponseEntity.accepted()
-                .location(URI.create("/v2/%s/blobs/uploads/%s".formatted(name, uuid)))
-                .header("Docker-Upload-UUID", uuid.toString())
-                .header("Range", "0-%d".formatted(lastByte))
+                .header("Docker-Content-Digest", digest)
                 .build();
     }
 }

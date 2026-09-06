@@ -159,6 +159,39 @@ paths:
         "429":
           description: Too many requests
 
+    delete:
+      tags:
+        - Blobs
+      summary: Delete blob
+      operationId: DeleteBlob
+      description: Delete a blob from the registry by digest.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the repository
+          schema:
+            type: string
+        - name: digest
+          in: path
+          required: true
+          description: Digest of the blob to delete
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Blob deleted successfully. No body is returned.
+        "400":
+          description: Invalid digest format.
+        "401":
+          description: Authentication required.
+        "403":
+          description: Access denied.
+        "404":
+          description: Blob not found.
+        "429":
+          description: Too many requests.
+
   /v2/{name}/blobs/uploads/{uuid}:
     get:
       tags:

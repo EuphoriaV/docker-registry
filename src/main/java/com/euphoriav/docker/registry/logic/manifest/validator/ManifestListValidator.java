@@ -1,7 +1,7 @@
 package com.euphoriav.docker.registry.logic.manifest.validator;
 
 import com.euphoriav.docker.registry.dao.ManifestDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.dto.ManifestListDto;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,11 +35,11 @@ public class ManifestListValidator extends AbstractManifestValidator<ManifestLis
     @Override
     public void validate(String name, String contentType, ManifestListDto manifest) {
         if (manifest.getManifests() == null) {
-            throw new InvalidRequestException("manifests section is null", ErrorResponse.ErrorCode.MANIFEST_INVALID);
+            throw new InvalidRequestException("manifests section is null", ErrorCode.MANIFEST_INVALID);
         }
         manifest.getManifests().forEach(manifestRef -> {
             if (manifestDao.findByDigest(name, manifestRef.getDigest()).isEmpty()) {
-                throw new InvalidRequestException("manifest references a manifest unknown to registry", ErrorResponse.ErrorCode.MANIFEST_BLOB_UNKNOWN);
+                throw new InvalidRequestException("manifest references a manifest unknown to registry", ErrorCode.MANIFEST_BLOB_UNKNOWN);
             }
         });
     }

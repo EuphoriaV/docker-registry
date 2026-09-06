@@ -1,13 +1,12 @@
 package com.euphoriav.docker.registry.logic.lock;
 
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -39,7 +38,7 @@ public class LockService {
                     log.debug("released lock with key = {}", key);
                 }
             } else {
-                throw new InvalidRequestException("could not obtain lock with key = %s".formatted(key), ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);
+                throw new InvalidRequestException("could not obtain lock with key = %s".formatted(key), ErrorCode.BLOB_UPLOAD_UNKNOWN);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

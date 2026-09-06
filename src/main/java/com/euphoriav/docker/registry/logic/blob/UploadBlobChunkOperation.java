@@ -1,7 +1,7 @@
 package com.euphoriav.docker.registry.logic.blob;
 
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
 import com.euphoriav.docker.registry.logic.helper.UploadChunkHelper;
@@ -30,12 +30,12 @@ public class UploadBlobChunkOperation {
         try {
             contentLength = body.contentLength();
         } catch (IOException e) {
-            throw new InvalidRequestException("could not get content length", ErrorResponse.ErrorCode.BLOB_UPLOAD_INVALID);
+            throw new InvalidRequestException("could not get content length", ErrorCode.BLOB_UPLOAD_INVALID);
         }
 
         var blobUploadOptional = blobUploadDao.find(id, name);
         if (blobUploadOptional.isEmpty()) {
-            throw new NotFoundException("blob upload unknown to registry", ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);
+            throw new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN);
         }
         var blobUpload = blobUploadOptional.get();
 

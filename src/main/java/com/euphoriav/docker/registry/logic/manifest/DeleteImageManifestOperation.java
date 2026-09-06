@@ -2,7 +2,7 @@ package com.euphoriav.docker.registry.logic.manifest;
 
 import com.euphoriav.docker.registry.dao.ManifestDao;
 import com.euphoriav.docker.registry.dao.TagDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.NotFoundException;
 import com.euphoriav.docker.registry.logic.helper.DigestHelper;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +23,13 @@ public class DeleteImageManifestOperation {
         if (isDigest) {
             var deleted = manifestDao.delete(name, reference);
             if (deleted < 1) {
-                throw new NotFoundException("manifest unknown to registry", ErrorResponse.ErrorCode.MANIFEST_UNKNOWN);
+                throw new NotFoundException("manifest unknown to registry", ErrorCode.MANIFEST_UNKNOWN);
             }
             tagDao.deleteByDigest(name, reference);
         } else {
             var deleted = tagDao.deleteByTag(name, reference);
             if (deleted < 1) {
-                throw new NotFoundException("tag unknown to registry", ErrorResponse.ErrorCode.MANIFEST_UNKNOWN);
+                throw new NotFoundException("tag unknown to registry", ErrorCode.MANIFEST_UNKNOWN);
             }
         }
     }

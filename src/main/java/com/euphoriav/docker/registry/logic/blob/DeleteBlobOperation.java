@@ -1,7 +1,7 @@
 package com.euphoriav.docker.registry.logic.blob;
 
 import com.euphoriav.docker.registry.dao.BlobDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.NotFoundException;
 import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class DeleteBlobOperation {
     public void activate(String name, String digest) {
         var blobOptional = blobDao.findForUpdate(digest, name);
         if (blobOptional.isEmpty()) {
-            throw new NotFoundException("blob unknown to registry", ErrorResponse.ErrorCode.BLOB_UNKNOWN);
+            throw new NotFoundException("blob unknown to registry", ErrorCode.BLOB_UNKNOWN);
         }
 
         blobDao.delete(name, digest);

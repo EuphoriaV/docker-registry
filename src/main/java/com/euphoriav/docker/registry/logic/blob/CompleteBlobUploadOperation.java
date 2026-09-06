@@ -52,11 +52,8 @@ public class CompleteBlobUploadOperation {
             throw new InvalidRequestException("could not get content length", ErrorCode.BLOB_UPLOAD_INVALID);
         }
 
-        var blobUploadOptional = blobUploadDao.find(id, name);
-        if (blobUploadOptional.isEmpty()) {
-            throw new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN);
-        }
-        var blobUpload = blobUploadOptional.get();
+        var blobUpload = blobUploadDao.find(id, name)
+                .orElseThrow(() -> new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN));
 
         long size = blobUpload.getBytesReceived();
         if (contentLength > 0) {
@@ -66,9 +63,10 @@ public class CompleteBlobUploadOperation {
             uploadChunkHelper.compareRangeAndUploadChunk(body, range, startRange, endRange, id);
         }
 
+        var digestAlgorithm = DigestAlgorithm.fromDigest(digest);
         String actualDigest;
         try {
-            actualDigest = digestHelper.calculateDigest(blobUploader.getInputStream(blobUpload.getId().toString()), DigestAlgorithm.fromDigest(digest));
+            actualDigest = digestHelper.calculateDigest(blobUploader.getInputStream(blobUpload.getId().toString()), digestAlgorithm);
         } catch (Exception e) {
             throw new InternalServerException("could not calculate actual digest", e);
         }
@@ -90,7 +88,7 @@ public class CompleteBlobUploadOperation {
             try {
                 blobUploader.delete(id.toString());
             } catch (IOException ex) {
-                log.error("failed to delete file", e);
+                log.error("failed to delete file", ex);
             }
         }
     }

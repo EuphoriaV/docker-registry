@@ -34,6 +34,14 @@ public class ManifestDao {
     }
 
     @Log(isDebug = true)
+    public Optional<Manifest> findByDigestForUpdate(String repository, String digest) {
+        //language=PostgreSQL
+        var sql = "select * from registry.manifest where repository = :repository and digest = :digest for update";
+        var params = Map.of("repository", repository, "digest", digest);
+        return jdbcTemplate.query(sql, params, BeanPropertyRowMapper.newInstance(Manifest.class)).stream().findFirst();
+    }
+
+    @Log(isDebug = true)
     public Optional<Manifest> findByTag(String repository, String tag) {
         //language=PostgreSQL
         var sql = "select m.id, m.repository, m.digest, m.data, m.media_type, m.size from registry.manifest m join registry.tag t using (repository, digest) where t.repository = :repository and t.tag = :tag";

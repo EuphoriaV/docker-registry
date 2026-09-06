@@ -21,14 +21,12 @@ public class DeleteBlobOperation {
 
     @Transactional
     public void activate(String name, String digest) {
-        var blobOptional = blobDao.findForUpdate(digest, name);
-        if (blobOptional.isEmpty()) {
-            throw new NotFoundException("blob unknown to registry", ErrorCode.BLOB_UNKNOWN);
-        }
+        var blob = blobDao.findForUpdate(digest, name)
+                .orElseThrow(() -> new NotFoundException("blob unknown to registry", ErrorCode.BLOB_UNKNOWN));
 
         blobDao.delete(name, digest);
         try {
-            blobUploader.delete(blobOptional.get().getFilename());
+            blobUploader.delete(blob.getFilename());
         } catch (IOException e) {
             log.error("failed to delete file", e);
         }

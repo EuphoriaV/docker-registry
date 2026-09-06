@@ -7,7 +7,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class SimpleManifestDto extends AbstractManifestDto{
+public class SimpleManifestDto extends AbstractManifestDto {
 
     private BlobRefDto config;
     private List<BlobRefDto> layers;

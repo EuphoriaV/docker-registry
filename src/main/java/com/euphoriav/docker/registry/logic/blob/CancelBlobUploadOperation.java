@@ -25,10 +25,9 @@ public class CancelBlobUploadOperation {
     }
 
     private void cancelUpload(String name, UUID id) {
-        var blobUploadOptional = blobUploadDao.find(id, name);
-        if (blobUploadOptional.isEmpty()) {
-            throw new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN);
-        }
+        blobUploadDao.find(id, name)
+                .orElseThrow(() -> new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN));
+
         blobUploadDao.delete(id);
         try {
             blobUploader.delete(id.toString());

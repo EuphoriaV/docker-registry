@@ -1,13 +1,14 @@
 package com.euphoriav.docker.registry.logic.manifest.validator;
 
 import com.euphoriav.docker.registry.dao.BlobDao;
-import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.dto.SimpleManifestDto;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.TreeSet;
 
 @Component
 public class SimpleManifestValidator extends AbstractManifestValidator<SimpleManifestDto> {
@@ -37,11 +38,11 @@ public class SimpleManifestValidator extends AbstractManifestValidator<SimpleMan
         if (manifest.getConfig() == null || manifest.getLayers() == null) {
             throw new InvalidRequestException("manifest contains null config or layers", ErrorCode.MANIFEST_INVALID);
         }
-        if (blobDao.findForUpdate(manifest.getConfig().getDigest(), name).isEmpty()) {
-            throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorCode.MANIFEST_BLOB_UNKNOWN);
-        }
-        manifest.getLayers().forEach(blobRef -> {
-            if (blobDao.findForUpdate(blobRef.getDigest(), name).isEmpty()) {
+        Set<String> digests = new TreeSet<>();
+        digests.add(manifest.getConfig().getDigest());
+        digests.addAll(manifest.getLayers().stream().map(SimpleManifestDto.BlobRefDto::getDigest).toList());
+        digests.forEach(digest -> {
+            if (blobDao.findForUpdate(digest, name).isEmpty()) {
                 throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorCode.MANIFEST_BLOB_UNKNOWN);
             }
         });

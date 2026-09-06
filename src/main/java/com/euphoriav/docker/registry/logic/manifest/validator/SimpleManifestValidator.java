@@ -1,7 +1,7 @@
 package com.euphoriav.docker.registry.logic.manifest.validator;
 
 import com.euphoriav.docker.registry.dao.BlobDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.dto.SimpleManifestDto;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,14 +35,14 @@ public class SimpleManifestValidator extends AbstractManifestValidator<SimpleMan
     @Override
     public void validate(String name, String contentType, SimpleManifestDto manifest) {
         if (manifest.getConfig() == null || manifest.getLayers() == null) {
-            throw new InvalidRequestException("manifest contains null config or layers", ErrorResponse.ErrorCode.MANIFEST_INVALID);
+            throw new InvalidRequestException("manifest contains null config or layers", ErrorCode.MANIFEST_INVALID);
         }
         if (blobDao.findForUpdate(manifest.getConfig().getDigest(), name).isEmpty()) {
-            throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorResponse.ErrorCode.MANIFEST_BLOB_UNKNOWN);
+            throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorCode.MANIFEST_BLOB_UNKNOWN);
         }
         manifest.getLayers().forEach(blobRef -> {
             if (blobDao.findForUpdate(blobRef.getDigest(), name).isEmpty()) {
-                throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorResponse.ErrorCode.MANIFEST_BLOB_UNKNOWN);
+                throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorCode.MANIFEST_BLOB_UNKNOWN);
             }
         });
     }

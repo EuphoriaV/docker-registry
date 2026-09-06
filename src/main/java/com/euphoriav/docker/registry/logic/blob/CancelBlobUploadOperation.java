@@ -1,7 +1,7 @@
 package com.euphoriav.docker.registry.logic.blob;
 
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.NotFoundException;
 import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
 import com.euphoriav.docker.registry.logic.lock.LockService;
@@ -27,7 +27,7 @@ public class CancelBlobUploadOperation {
     private void cancelUpload(String name, UUID id) {
         var blobUploadOptional = blobUploadDao.find(id, name);
         if (blobUploadOptional.isEmpty()) {
-            throw new NotFoundException("blob upload unknown to registry", ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);
+            throw new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN);
         }
         blobUploadDao.delete(id);
         try {

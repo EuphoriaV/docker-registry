@@ -1,7 +1,7 @@
 package com.euphoriav.docker.registry.logic.manifest.validator;
 
 import com.euphoriav.docker.registry.dto.AbstractManifestDto;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +23,15 @@ public abstract class AbstractManifestValidator<T extends AbstractManifestDto> {
         try {
             manifest = objectMapper.readValue(data, getSupportedClass());
         } catch (IOException e) {
-            throw new InvalidRequestException("could not read manifest", ErrorResponse.ErrorCode.MANIFEST_INVALID, e.getMessage());
+            throw new InvalidRequestException("could not read manifest", ErrorCode.MANIFEST_INVALID, e.getMessage());
         }
 
         if (manifest.getSchemaVersion() != 2) {
-            throw new InvalidRequestException("invalid schema version", ErrorResponse.ErrorCode.MANIFEST_INVALID);
+            throw new InvalidRequestException("invalid schema version", ErrorCode.MANIFEST_INVALID);
         }
 
         if (!contentType.equals(manifest.getMediaType())) {
-            throw new InvalidRequestException("media type of manifest does not match content-type", ErrorResponse.ErrorCode.MANIFEST_INVALID);
+            throw new InvalidRequestException("media type of manifest does not match content-type", ErrorCode.MANIFEST_INVALID);
         }
         validate(name, contentType, manifest);
     }

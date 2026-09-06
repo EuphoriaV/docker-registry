@@ -1,7 +1,7 @@
 package com.euphoriav.docker.registry.logic.manifest;
 
 import com.euphoriav.docker.registry.dao.ManifestDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.NotFoundException;
 import com.euphoriav.docker.registry.logic.helper.DigestHelper;
 import com.euphoriav.docker.registry.model.Manifest;
@@ -26,7 +26,7 @@ public class GetImageManifestOperation {
             manifestOptional = manifestDao.findByTag(name, reference);
         }
         if (manifestOptional.isEmpty()) {
-            throw new NotFoundException("manifest unknown to registry", ErrorResponse.ErrorCode.MANIFEST_UNKNOWN);
+            throw new NotFoundException("manifest unknown to registry", ErrorCode.MANIFEST_UNKNOWN);
         }
         return manifestOptional.get();
     }

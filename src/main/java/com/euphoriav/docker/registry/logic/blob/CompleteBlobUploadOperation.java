@@ -2,7 +2,8 @@ package com.euphoriav.docker.registry.logic.blob;
 
 import com.euphoriav.docker.registry.dao.BlobDao;
 import com.euphoriav.docker.registry.dao.BlobUploadDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.DigestAlgorithm;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.InternalServerException;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
@@ -48,12 +49,12 @@ public class CompleteBlobUploadOperation {
         try {
             contentLength = body == null ? 0 : body.contentLength();
         } catch (IOException e) {
-            throw new InvalidRequestException("could not get content length", ErrorResponse.ErrorCode.BLOB_UPLOAD_INVALID);
+            throw new InvalidRequestException("could not get content length", ErrorCode.BLOB_UPLOAD_INVALID);
         }
 
         var blobUploadOptional = blobUploadDao.find(id, name);
         if (blobUploadOptional.isEmpty()) {
-            throw new NotFoundException("blob upload unknown to registry", ErrorResponse.ErrorCode.BLOB_UPLOAD_UNKNOWN);
+            throw new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN);
         }
         var blobUpload = blobUploadOptional.get();
 
@@ -67,13 +68,13 @@ public class CompleteBlobUploadOperation {
 
         String actualDigest;
         try {
-            actualDigest = digestHelper.calculateDigest(blobUploader.getInputStream(blobUpload.getId().toString()));
+            actualDigest = digestHelper.calculateDigest(blobUploader.getInputStream(blobUpload.getId().toString()), DigestAlgorithm.fromDigest(digest));
         } catch (Exception e) {
             throw new InternalServerException("could not calculate actual digest", e);
         }
 
         if (!digest.equals(actualDigest)) {
-            throw new InvalidRequestException("provided digest did not match uploaded content", ErrorResponse.ErrorCode.DIGEST_INVALID);
+            throw new InvalidRequestException("provided digest did not match uploaded content", ErrorCode.DIGEST_INVALID);
         }
 
         self.createBlob(blobUpload, digest, size, id);

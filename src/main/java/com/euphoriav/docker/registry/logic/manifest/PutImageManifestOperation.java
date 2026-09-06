@@ -2,7 +2,8 @@ package com.euphoriav.docker.registry.logic.manifest;
 
 import com.euphoriav.docker.registry.dao.ManifestDao;
 import com.euphoriav.docker.registry.dao.TagDao;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.DigestAlgorithm;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.InternalServerException;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.exception.LimitViolationException;
@@ -49,42 +50,44 @@ public class PutImageManifestOperation {
     }
 
     public String activate(String name, String reference, Resource resource, String contentType) {
+        var isDigest = digestHelper.isDigest(reference);
+        var digestAlgorithm = isDigest ? DigestAlgorithm.fromDigest(reference) : DigestAlgorithm.SHA_256;
+
         String digest;
         byte[] data;
         try {
             data = resource.getContentAsByteArray();
-            digest = digestHelper.calculateDigest(new ByteArrayInputStream(data));
+            digest = digestHelper.calculateDigest(new ByteArrayInputStream(data), digestAlgorithm);
         } catch (Exception e) {
             throw new InternalServerException("could not calculate actual digest", e);
         }
 
-        self.process(name, reference, contentType, data, digest);
+        self.process(name, reference, contentType, data, digest, isDigest);
         return digest;
     }
 
     @Transactional
-    public void process(String name, String reference, String contentType, byte[] data, String digest) {
+    public void process(String name, String reference, String contentType, byte[] data, String digest, boolean isDigest) {
         if (data.length > MANIFEST_MAX_SIZE_BYTES) {
             throw new LimitViolationException("manifest is too large");
         }
 
-        var isDigest = digestHelper.isDigest(reference);
         if (isDigest) {
             if (!digest.equals(reference)) {
-                throw new InvalidRequestException("provided digest did not match uploaded content", ErrorResponse.ErrorCode.DIGEST_INVALID);
+                throw new InvalidRequestException("provided digest did not match uploaded content", ErrorCode.DIGEST_INVALID);
             }
         } else if (!TAG_PATTERN.matcher(reference).matches()) {
-            throw new InvalidRequestException("invalid tag", ErrorResponse.ErrorCode.MANIFEST_INVALID);
+            throw new InvalidRequestException("invalid tag", ErrorCode.MANIFEST_INVALID);
         }
 
         var validator = manifestValidators.get(contentType);
         if (validator == null) {
-            throw new InvalidRequestException("unsupported media type", ErrorResponse.ErrorCode.MANIFEST_INVALID);
+            throw new InvalidRequestException("unsupported media type", ErrorCode.MANIFEST_INVALID);
         }
         validator.validate(name, contentType, data);
 
         manifestDao.create(name, digest, data, contentType);
-        if (!reference.equals(digest)) {
+        if (!isDigest) {
             tagDao.create(name, digest, reference);
         }
     }

@@ -1,7 +1,7 @@
 package com.euphoriav.docker.registry.aop;
 
 import com.euphoriav.docker.registry.aop.annotation.Name;
-import com.euphoriav.docker.registry.dto.ErrorResponse;
+import com.euphoriav.docker.registry.enums.ErrorCode;
 import com.euphoriav.docker.registry.exception.InvalidRequestException;
 import com.euphoriav.docker.registry.logic.helper.RequestValidator;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,7 +42,7 @@ public class NameArgumentResolver implements HandlerMethodArgumentResolver {
             if (matcher.matches()) {
                 var name = matcher.group(1);
                 if (!requestValidator.validateName(name)) {
-                    throw new InvalidRequestException("invalid repository name", ErrorResponse.ErrorCode.NAME_INVALID);
+                    throw new InvalidRequestException("invalid repository name", ErrorCode.NAME_INVALID);
                 }
                 return name;
             }

@@ -2,6 +2,7 @@ package com.euphoriav.docker.registry.controller;
 
 import com.euphoriav.docker.registry.aop.annotation.Log;
 import com.euphoriav.docker.registry.aop.annotation.Name;
+import com.euphoriav.docker.registry.logic.manifest.DeleteImageManifestOperation;
 import com.euphoriav.docker.registry.logic.manifest.GetImageManifestOperation;
 import com.euphoriav.docker.registry.logic.manifest.PutImageManifestOperation;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ public class ManifestController {
 
     private final GetImageManifestOperation getImageManifestOperation;
     private final PutImageManifestOperation putImageManifestOperation;
+    private final DeleteImageManifestOperation deleteImageManifestOperation;
     private final NativeWebRequest nativeWebRequest;
 
     @Log
@@ -53,6 +55,13 @@ public class ManifestController {
                 .header("Docker-Content-Digest", digest)
                 .header("Content-Length", "0")
                 .build();
+    }
+
+    @Log
+    @DeleteMapping
+    public ResponseEntity<Resource> deleteImageManifest(@Name String name, @PathVariable("reference") String reference) {
+        deleteImageManifestOperation.activate(name, reference);
+        return ResponseEntity.accepted().build();
     }
 
     private String getContentType() {

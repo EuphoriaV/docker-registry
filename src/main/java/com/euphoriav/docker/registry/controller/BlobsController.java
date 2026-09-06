@@ -114,10 +114,8 @@ public class BlobsController {
 
     @Log
     @DeleteMapping("/{digest}")
-    public ResponseEntity<Resource> deleteBlob(@Name String name, @PathVariable("digest") String digest) {
+    public ResponseEntity<Void> deleteBlob(@Name String name, @PathVariable("digest") String digest) {
         deleteBlobOperation.activate(name, digest);
-        return ResponseEntity.accepted()
-                .header("Docker-Content-Digest", digest)
-                .build();
+        return ResponseEntity.accepted().build();
     }
 }

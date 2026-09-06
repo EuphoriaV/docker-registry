@@ -26,11 +26,6 @@ public class DeleteBlobOperation {
             throw new NotFoundException("blob unknown to registry", ErrorResponse.ErrorCode.BLOB_UNKNOWN);
         }
 
-        try {
-            Thread.sleep(30000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         blobDao.delete(name, digest);
         try {
             blobUploader.delete(blobOptional.get().getFilename());

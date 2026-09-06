@@ -40,4 +40,12 @@ public class ManifestDao {
         var params = Map.of("repository", repository, "tag", tag);
         return jdbcTemplate.query(sql, params, BeanPropertyRowMapper.newInstance(Manifest.class)).stream().findFirst();
     }
+
+    @Log(isDebug = true)
+    public long delete(String repository, String digest) {
+        //language=PostgreSQL
+        var sql = "delete from registry.manifest where repository = :repository and digest = :digest";
+        var params = Map.of("repository", repository, "digest", digest);
+        return jdbcTemplate.update(sql, params);
+    }
 }

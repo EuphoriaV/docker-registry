@@ -82,11 +82,7 @@ public class PutImageManifestOperation {
             throw new InvalidRequestException("unsupported media type", ErrorResponse.ErrorCode.MANIFEST_INVALID);
         }
         validator.validate(name, contentType, data);
-        try {
-            Thread.sleep(30000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+
         manifestDao.create(name, digest, data, contentType);
         if (!reference.equals(digest)) {
             tagDao.create(name, digest, reference);

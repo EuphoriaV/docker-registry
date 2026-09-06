@@ -570,3 +570,34 @@ paths:
           description: Manifest not found.
         "429":
           description: Too many requests.
+
+    delete:
+      tags:
+        - Manifests
+      summary: Delete image manifest
+      operationId: DeleteImageManifest
+      description: Delete an image manifest from a repository by digest.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the repository
+          schema:
+            type: string
+        - name: reference
+          in: path
+          required: true
+          description: Digest of the manifest to delete
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Manifest deleted successfully. No content returned.
+        "401":
+          description: Authentication required.
+        "403":
+          description: Access denied. The manifest may still be referenced.
+        "404":
+          description: Manifest or repository not found.
+        "429":
+          description: Too many requests.

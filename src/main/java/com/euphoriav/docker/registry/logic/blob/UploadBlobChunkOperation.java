@@ -33,11 +33,8 @@ public class UploadBlobChunkOperation {
             throw new InvalidRequestException("could not get content length", ErrorCode.BLOB_UPLOAD_INVALID);
         }
 
-        var blobUploadOptional = blobUploadDao.find(id, name);
-        if (blobUploadOptional.isEmpty()) {
-            throw new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN);
-        }
-        var blobUpload = blobUploadOptional.get();
+        var blobUpload = blobUploadDao.find(id, name)
+                .orElseThrow(() -> new NotFoundException("blob upload unknown to registry", ErrorCode.BLOB_UPLOAD_UNKNOWN));
 
         long startRange = blobUpload.getBytesReceived(), endRange = startRange + contentLength - 1;
         uploadChunkHelper.compareRangeAndUploadChunk(body, range, startRange, endRange, id);

@@ -25,9 +25,6 @@ public class GetImageManifestOperation {
         } else {
             manifestOptional = manifestDao.findByTag(name, reference);
         }
-        if (manifestOptional.isEmpty()) {
-            throw new NotFoundException("manifest unknown to registry", ErrorCode.MANIFEST_UNKNOWN);
-        }
-        return manifestOptional.get();
+        return manifestOptional.orElseThrow(() -> new NotFoundException("manifest unknown to registry", ErrorCode.MANIFEST_UNKNOWN));
     }
 }

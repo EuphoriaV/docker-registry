@@ -13,10 +13,8 @@ public class CheckBlobExistsOperation {
     private final BlobDao blobDao;
 
     public long activate(String name, String digest) {
-        var blobOptional = blobDao.find(digest, name);
-        if (blobOptional.isEmpty()) {
-            throw new NotFoundException("blob unknown to registry", ErrorCode.BLOB_UNKNOWN);
-        }
-        return blobOptional.get().getSize();
+        return blobDao.find(digest, name)
+                .orElseThrow(() -> new NotFoundException("blob unknown to registry", ErrorCode.BLOB_UNKNOWN))
+                .getSize();
     }
 }

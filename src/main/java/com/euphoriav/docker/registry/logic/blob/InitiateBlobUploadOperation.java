@@ -17,13 +17,14 @@ public class InitiateBlobUploadOperation {
 
     public UUID activate(String name) {
         var id = UUID.randomUUID();
-        blobUploadDao.insert(id, name);
 
         try {
             blobUploader.initUpload(id);
         } catch (Exception e) {
             throw new InternalServerException("could not create initial blob file", e);
         }
+
+        blobUploadDao.insert(id, name);
         return id;
     }
 }

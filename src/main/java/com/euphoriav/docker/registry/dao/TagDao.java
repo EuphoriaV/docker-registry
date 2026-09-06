@@ -20,4 +20,20 @@ public class TagDao {
         var params = Map.of("repository", repository, "digest", digest, "tag", tag);
         jdbcTemplate.update(sql, params);
     }
+
+    @Log(isDebug = true)
+    public long deleteByTag(String repository, String tag) {
+        //language=PostgreSQL
+        var sql = "delete from registry.tag where repository = :repository and tag = :tag";
+        var params = Map.of("repository", repository, "tag", tag);
+        return jdbcTemplate.update(sql, params);
+    }
+
+    @Log(isDebug = true)
+    public void deleteByDigest(String repository, String digest) {
+        //language=PostgreSQL
+        var sql = "delete from registry.tag where repository = :repository and digest = :digest";
+        var params = Map.of("repository", repository, "digest", digest);
+        jdbcTemplate.update(sql, params);
+    }
 }

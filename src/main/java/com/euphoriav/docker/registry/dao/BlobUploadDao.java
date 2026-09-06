@@ -51,9 +51,9 @@ public class BlobUploadDao {
     }
 
     @Log(isDebug = true)
-    public List<UUID> clearOutdatedUploads(int ttlMinutes) {
+    public List<UUID> getOutdatedUploads(int ttlMinutes) {
         //language=PostgreSQL
-        var sql = "delete from registry.blob_upload where created_at < now() - interval '%d minutes' returning id".formatted(ttlMinutes);
+        var sql = "select id from registry.blob_upload where created_at < now() - interval '%d minutes'".formatted(ttlMinutes);
         return jdbcTemplate.queryForList(sql, Map.of(), UUID.class);
     }
 }

@@ -2,41 +2,35 @@ package com.euphoriav.docker.registry.logic.blob;
 
 import com.euphoriav.docker.registry.dao.BlobDao;
 import com.euphoriav.docker.registry.dto.ErrorResponse;
-import com.euphoriav.docker.registry.exception.InternalServerException;
 import com.euphoriav.docker.registry.exception.NotFoundException;
 import com.euphoriav.docker.registry.logic.blob.upload.BlobUploader;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-public class GetBlobOperation {
+public class DeleteBlobOperation {
 
     private final BlobUploader blobUploader;
     private final BlobDao blobDao;
 
     @Transactional
-    public Response activate(String name, String digest) {
-        var blobOptional = blobDao.find(digest, name);
+    public void activate(String name, String digest) {
+        var blobOptional = blobDao.findForUpdate(digest, name);
         if (blobOptional.isEmpty()) {
             throw new NotFoundException("blob unknown to registry", ErrorResponse.ErrorCode.BLOB_UNKNOWN);
         }
-        var blob = blobOptional.get();
 
-        Resource resource;
+        blobDao.delete(name, digest);
         try {
-            resource = new InputStreamResource(blobUploader.getInputStream(blob.getFilename()));
+            blobUploader.delete(blobOptional.get().getFilename());
         } catch (IOException e) {
-            throw new InternalServerException("could not read blob", e);
+            log.error("failed to delete file", e);
         }
-        return new Response(blob.getSize(), resource);
-    }
-
-    public record Response(long size, Resource resource) {
     }
 }

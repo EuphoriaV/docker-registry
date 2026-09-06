@@ -37,11 +37,11 @@ public class SimpleManifestValidator extends AbstractManifestValidator<SimpleMan
         if (manifest.getConfig() == null || manifest.getLayers() == null) {
             throw new InvalidRequestException("manifest contains null config or layers", ErrorResponse.ErrorCode.MANIFEST_INVALID);
         }
-        if (blobDao.find(manifest.getConfig().getDigest(), name).isEmpty()) {
+        if (blobDao.findForUpdate(manifest.getConfig().getDigest(), name).isEmpty()) {
             throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorResponse.ErrorCode.MANIFEST_BLOB_UNKNOWN);
         }
         manifest.getLayers().forEach(blobRef -> {
-            if (blobDao.find(blobRef.getDigest(), name).isEmpty()) {
+            if (blobDao.findForUpdate(blobRef.getDigest(), name).isEmpty()) {
                 throw new InvalidRequestException("manifest references a blob unknown to registry", ErrorResponse.ErrorCode.MANIFEST_BLOB_UNKNOWN);
             }
         });

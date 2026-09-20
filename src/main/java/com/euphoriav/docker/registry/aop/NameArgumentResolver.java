@@ -47,6 +47,6 @@ public class NameArgumentResolver implements HandlerMethodArgumentResolver {
                 return name;
             }
         }
-        return null;
+        throw new InvalidRequestException("invalid repository name", ErrorCode.NAME_INVALID);
     }
 }

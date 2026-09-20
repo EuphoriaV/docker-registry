@@ -45,6 +45,10 @@ public class CompleteBlobUploadOperation {
     }
 
     private void completeUpload(String name, UUID id, String digest, String range, Resource body) {
+        if (!digestHelper.isDigest(digest)) {
+            throw new InvalidRequestException("invalid digest algorithm", ErrorCode.DIGEST_INVALID);
+        }
+
         long contentLength;
         try {
             contentLength = body == null ? 0 : body.contentLength();

@@ -1,6 +1,7 @@
 package com.euphoriav.docker.registry.logic.blob.upload;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -17,25 +18,26 @@ import java.util.UUID;
 @Component
 public class LocalBlobUploader implements BlobUploader {
 
-    private static final Path UPLOADS_PATH = Path.of("uploads");
+    @Value("${app.uploads-path}")
+    private Path uploadsPath;
 
     @Override
     public void initUpload(UUID id) throws IOException {
-        var filePath = UPLOADS_PATH.resolve(id.toString());
+        var filePath = uploadsPath.resolve(id.toString());
         Files.createFile(filePath);
         log.debug("Created empty file {}", filePath);
     }
 
     @Override
     public void delete(String filename) throws IOException {
-        var filePath = UPLOADS_PATH.resolve(filename);
+        var filePath = uploadsPath.resolve(filename);
         Files.deleteIfExists(filePath);
         log.debug("Deleted file {}", filePath);
     }
 
     @Override
     public void uploadChunk(UUID id, InputStream inputStream, long offset) throws IOException {
-        var filePath = UPLOADS_PATH.resolve(id.toString());
+        var filePath = uploadsPath.resolve(id.toString());
         try (FileChannel channel = FileChannel.open(filePath, StandardOpenOption.WRITE)) {
             channel.position(offset);
             try (OutputStream out = Channels.newOutputStream(channel)) {
@@ -47,7 +49,7 @@ public class LocalBlobUploader implements BlobUploader {
 
     @Override
     public InputStream getInputStream(String filename) throws IOException {
-        var filePath = UPLOADS_PATH.resolve(filename);
+        var filePath = uploadsPath.resolve(filename);
 
         return Files.newInputStream(filePath);
     }

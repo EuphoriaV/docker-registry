@@ -6,17 +6,25 @@ info:
     email: ilyakuznecov84@gmail.com
     name: Ilya Kuznetsov
   description: Docker registry API based on OCI Distribution Specification
+
 servers:
   - description: Local server
-    url: http://localhost:5000
+    url: http://euphoriav.crazedns.ru:5000
 
 tags:
-
   - name: Manifests
     description: Image manifests are JSON documents that describe an image
-
   - name: Blobs
     description: Blobs are the binary objects referenced from manifests
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
 
 paths:
   /v2/:

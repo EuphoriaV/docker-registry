@@ -25,3 +25,6 @@ app:
   clear-uploads:
     cron: 0 0 * * * *
     ttl-minutes: 60
+  uploads-path: C:\Users\Ilya\uploads
+  auth:
+    realm: http://euphoriav.crazedns.ru:8080/token
